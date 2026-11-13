@@ -225,13 +225,18 @@ class SpecContractTestClient:
 
     def _init_flask_client_if_available(self):
         try:
-            from crowdwise.backend.app import create_app
+            from backend.app import create_app
             app = create_app()
             app.config["TESTING"] = True
             self._flask_client = app.test_client()
         except Exception:
-            # Backend not yet implemented or not running
-            self._flask_client = None
+            try:
+                from crowdwise.backend.app import create_app
+                app = create_app()
+                app.config["TESTING"] = True
+                self._flask_client = app.test_client()
+            except Exception:
+                self._flask_client = None
 
     def get(self, endpoint: str, query_params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Simulates GET request and returns parsed JSON envelope."""

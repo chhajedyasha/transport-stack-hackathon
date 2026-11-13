@@ -246,11 +246,9 @@ class JourneyPlannerService:
             else:
                 transit_dist_km = max(0.5, float(stops_count) * 0.85)
 
-            # Detour Constraint 1: Geographic Detour Ratio delta <= 2.8 (F22)
+            # Detour Constraint 1: Geographic Detour Ratio delta (F22)
             detour_denom = max(0.1, straight_dist_km)
             detour_ratio = round(transit_dist_km / detour_denom, 2)
-            if straight_dist_km > 0.05 and detour_ratio > 2.8:
-                continue  # skip excessively circuitous routes
 
             # Fetch intermediate zone IDs preserving sequential physical order
             zones_stmt = (
@@ -384,6 +382,17 @@ class JourneyPlannerService:
             }
             candidates.append(candidate_record)
 
+        # Detour Constraint 1: Geographic Detour Ratio delta <= 2.80 (F22)
+        # If any candidates satisfy delta <= 2.80, filter out excessively circuitous routes.
+        # But if ONLY circuitous routes exist, preserve the single fastest one.
+        if straight_dist_km > 0.05 and candidates:
+            valid_detour_candidates = [c for c in candidates if c["timing"]["detour_ratio"] <= 2.80]
+            if valid_detour_candidates:
+                candidates = valid_detour_candidates
+            else:
+                fastest_circ = min(candidates, key=lambda c: c["timing"]["total_duration_min"])
+                candidates = [fastest_circ]
+
         # Deduplicate across patterns sharing same route_id & direction_id, keeping fastest
         candidates = self._deduplicate_route_options(candidates)
 
@@ -396,15 +405,14 @@ class JourneyPlannerService:
                 candidates = bounded_candidates
 
         # If no candidates found from direct matches, check canonical demonstration queries
-        if not candidates:
-            if is_mock_query or (origin_stop and dest_stop and not candidates):
-                candidates = self._generate_canonical_fallback_options(
-                    origin_stop=origin_stop,
-                    dest_stop=dest_stop,
-                    hour=hour,
-                    day_type=resolved_day_type,
-                    req_dep_str=req_dep_str,
-                )
+        if not candidates and is_mock_query:
+            candidates = self._generate_canonical_fallback_options(
+                origin_stop=origin_stop,
+                dest_stop=dest_stop,
+                hour=hour,
+                day_type=resolved_day_type,
+                req_dep_str=req_dep_str,
+            )
 
         # 3. Transparent Multi-Objective Scoring (F21)
         scored_options = self.scorer.score_candidates(candidates, preference=preference)

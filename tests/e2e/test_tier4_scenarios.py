@@ -11,7 +11,10 @@ import pytest
 from datetime import datetime, date, timedelta, timezone
 import numpy as np
 import pandas as pd
-from crowdwise.tests.e2e.conftest import SpecReferenceOracle, SpecContractTestClient
+try:
+    from tests.e2e.conftest import SpecReferenceOracle, SpecContractTestClient
+except ModuleNotFoundError:
+    from crowdwise.tests.e2e.conftest import SpecReferenceOracle, SpecContractTestClient
 
 
 class TestTier4RealWorldDelhiScenarios:

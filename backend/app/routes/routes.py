@@ -82,12 +82,12 @@ def get_route_details(route_id: str):
         )
     ).scalars().first()
 
-    # Route not found in DB - check demo aliases or fallback to first route
+    # Route not found in DB - check demo aliases or return 404
     if not route:
         if clean_id.upper() in ("101UP", "101DN", "101", "8UP", "DEMO", "DEFAULT"):
             route = db.session.execute(select(DimRoute).where(DimRoute.route_id == "102A")).scalars().first()
-        if not route:
-            route = db.session.execute(select(DimRoute).limit(1)).scalars().first()
+            if not route:
+                route = db.session.execute(select(DimRoute).limit(1)).scalars().first()
 
     if not route:
         return api_response(
