@@ -18,3 +18,23 @@
 - **Walking Speed**: Haversine distance multiplied by 1.3 road detour factor divided by 4.5 km/h walking speed.
 - **Zone Partitioning**: Ordered route stops partitioned into up to 8 contiguous zones using the closed-form formula `zone_id = min(7, floor(8 * seq / N))`. Routes with 12 or fewer stops assign 1 zone per stop.
 
+
+
+## 4. Official Problem Statement Ingestion & Alignment (2026-11-13)
+- **Official Brief Saved**: Ingested full official problem statement into `docs/PROBLEM_BRIEF.md`.
+- **Real Dataset Discovered**: Download URL identified at `https://pub-091bd9e794bb4877b10b29e6df80f065.r2.dev/2026-10/October-Delhi.csv.zip` covering 1 to 31 October 2026 (~2.56M tickets).
+- **Exact Field Mapping Confirmed**:
+  - `start_stop_name` -> `boarding_stop`
+  - `end_stop_name` -> `destination_stop` (Confirms Mode A: Destination Observed!)
+  - `route` (e.g. `8UP`) -> `route_name`
+  - `created_at` (IST) -> `timestamp`
+  - `passenger_count` -> `quantity`
+  - `amount` -> `fare`
+  - `vehicle_number` -> `bus_id`
+  - `ticket_type_id` -> `ticket_type`
+  - `is_ac` -> `is_ac`
+- **UI Terminology Aligned**: Crowding badges updated to match exact hackathon specifications:
+  - Low (<40%) -> **"Seats Available"**
+  - Moderate (40-75%) -> **"Standing Room"**
+  - High (>75%) -> **"Crowded"**
+- **Canonical Test Route**: "Anand Vihar to Connaught Place, leaving at 6 PM on a weekday" established as primary showcase demo query.

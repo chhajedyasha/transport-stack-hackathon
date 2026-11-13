@@ -1,0 +1,36 @@
+# schema_mapping.yaml — Official Delhi Transport Stack ETM Data Mapping
+# Canonical fields mapping for October-Delhi.csv (Transport Stack Hackathon 2026)
+
+canonical_mapping:
+  ticket_id: null                     # Row index / auto-generated
+  timestamp: "created_at"             # created_at (IST)
+  route_id: "route"                   # e.g. "8UP", "108DOWN"
+  route_name: "route"
+  trip_id: null                       # Reconstructed by grouping (vehicle_number, route, created_at)
+  bus_id: "vehicle_number"            # vehicle_number
+  boarding_stop: "start_stop_name"    # start_stop_name
+  destination_stop: "end_stop_name"  # end_stop_name (Observed -> Mode A exact OD!)
+  quantity: "passenger_count"         # passenger_count
+  fare: "amount"                      # amount
+  ticket_type: "ticket_type_id"       # ticket_type_id
+  payment_mode: null
+  bus_capacity: null
+  is_ac: "is_ac"                      # 0 or 1
+
+required_fields:
+  - timestamp
+  - route_id
+
+inference_mode: "mode_a"              # Mode A: Destination stop is observed!
+
+synonyms:
+  timestamp: ["created_at", "timestamp", "ticket_time", "issue_time", "time"]
+  route_id: ["route", "route_name", "route_no", "route_id", "route_number"]
+  bus_id: ["vehicle_number", "bus_no", "bus_number", "vehicle_id", "bus_id"]
+  boarding_stop: ["start_stop_name", "source_stop", "boarding_stop", "from_stop", "origin_stop"]
+  destination_stop: ["end_stop_name", "destination_stop", "to_stop", "alighting_stop", "dest_stop"]
+  quantity: ["passenger_count", "quantity", "tickets_count", "pax", "count"]
+  fare: ["amount", "fare", "ticket_fare", "total_amount", "price"]
+  ticket_type: ["ticket_type_id", "ticket_type", "type"]
+  is_ac: ["is_ac", "ac_flag", "ac", "is_ac_bus"]
+

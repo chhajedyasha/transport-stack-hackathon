@@ -93,23 +93,31 @@ def build_service_calendar_map(
         Dict mapping service_id string -> Set[str] of {'WEEKDAY', 'SATURDAY', 'SUNDAY'}.
     """
     service_map: Dict[str, Set[str]] = {}
+    regular_service_map: Dict[str, Set[str]] = {}
 
     # 1. Process calendar.txt
     if calendar_df is not None and not calendar_df.empty:
-        for _, row in calendar_df.iterrows():
-            srv_id = str(row["service_id"]).strip()
-            active_days = map_calendar_row(row.to_dict())
-            if not active_days:
-                # If all flags are 0, default to daily to avoid silent route loss
-                active_days = set(CANONICAL_DAY_TYPES)
-            service_map[srv_id] = active_days
+        for row in calendar_df.itertuples(index=False):
+            srv_id = str(row.service_id).strip()
+            row_dict = row._asdict() if hasattr(row, "_asdict") else {
+                "monday": getattr(row, "monday", 0),
+                "tuesday": getattr(row, "tuesday", 0),
+                "wednesday": getattr(row, "wednesday", 0),
+                "thursday": getattr(row, "thursday", 0),
+                "friday": getattr(row, "friday", 0),
+                "saturday": getattr(row, "saturday", 0),
+                "sunday": getattr(row, "sunday", 0),
+            }
+            active_days = map_calendar_row(row_dict)
+            service_map[srv_id] = set(active_days)
+            regular_service_map[srv_id] = set(active_days)
 
     # 2. Process calendar_dates.txt exceptions if present
     if calendar_dates_df is not None and not calendar_dates_df.empty:
-        for _, row in calendar_dates_df.iterrows():
-            srv_id = str(row["service_id"]).strip()
-            date_str = str(row["date"]).strip()
-            exc_type = int(row.get("exception_type", 1))
+        for row in calendar_dates_df.itertuples(index=False):
+            srv_id = str(row.service_id).strip()
+            date_str = str(row.date).strip()
+            exc_type = int(getattr(row, "exception_type", 1))
 
             try:
                 dt = datetime.datetime.strptime(date_str, "%Y%m%d").date()
@@ -124,13 +132,23 @@ def build_service_calendar_map(
                 if srv_id not in service_map:
                     service_map[srv_id] = set()
 
-                if exc_type == 1:  # Service added
+                if exc_type == 1:  # Service added on this date
                     service_map[srv_id].add(target_day)
-                elif exc_type == 2:  # Service removed
-                    service_map[srv_id].discard(target_day)
+                elif exc_type == 2:  # Service removed on this date
+                    # Single holiday/date cancellation does NOT permanently delete
+                    # target_day from regular recurring weekly schedule
+                    if srv_id not in regular_service_map or target_day not in regular_service_map[srv_id]:
+                        service_map[srv_id].discard(target_day)
             except Exception as e:
                 logger.warning(f"Error parsing calendar exception row: {e}")
                 continue
+
+    # 3. Fallback for services with zero active day types defined
+    for srv_id, days in list(service_map.items()):
+        if not days:
+            # If service defined but completely empty after both calendar and calendar_dates,
+            # default to all canonical day types to avoid silent route loss
+            service_map[srv_id] = set(CANONICAL_DAY_TYPES)
 
     return service_map
 

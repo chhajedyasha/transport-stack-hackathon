@@ -65,6 +65,43 @@ class TestDirectionalityResolution:
         assert resolve_direction(route_short_name="GL-22 UP") == 0
         assert resolve_direction(route_short_name="GL-22 DOWN") == 1
 
+    def test_interface_contract_positional_arguments(self):
+        """Verifies resolve_direction(route_name, trip_id) positional contract per PROJECT.md M1<->M2."""
+        assert resolve_direction("502DOWN", "TRIP_01") == 1
+        assert resolve_direction("502UP", "TRIP_01") == 0
+        assert resolve_direction("101DOWN", "TRIP_02") == 1
+        assert resolve_direction("101UP", "TRIP_02") == 0
+        assert resolve_direction("GL-22 DOWN", "TRIP_03") == 1
+        assert resolve_direction("GL-22 UP", "TRIP_03") == 0
+
+    def test_level2_loop_orientation_reconciliation(self):
+        """Verifies CLW -> 1 and CCLW -> 0 matching Level 4 shoelace curvature."""
+        assert resolve_direction(route_short_name="TMS CLW") == 1
+        assert resolve_direction(route_short_name="TMS CCLW") == 0
+        assert resolve_direction(route_short_name="OMS CLW") == 1
+        assert resolve_direction(route_short_name="OMS CCLW") == 0
+        assert resolve_direction(route_short_name="101CLW") == 1
+        assert resolve_direction(route_short_name="101CCLW") == 0
+
+    def test_level2_delimiters_parentheses_and_brackets(self):
+        """Verifies parentheses and brackets delimiters for UP, DOWN, DN, INBOUND."""
+        assert resolve_direction(route_short_name="502 (DOWN)") == 1
+        assert resolve_direction(route_short_name="502 [DOWN]") == 1
+        assert resolve_direction(route_short_name="502 (UP)") == 0
+        assert resolve_direction(route_short_name="502 [UP]") == 0
+        assert resolve_direction(route_short_name="502 (DN)") == 1
+        assert resolve_direction(route_short_name="502 (INBOUND)") == 1
+
+    def test_level2_natural_language_word_boundary_group(self):
+        """Verifies words like GROUP do not trigger false positive UP matching."""
+        southbound_coords = [(28.70, 77.20), (28.50, 77.20)]
+        res = resolve_direction(
+            route_short_name="502",
+            trip_headsign="DWARKA SECTOR 10 TO GROUP HOUSING SOCIETY",
+            stop_coords=southbound_coords,
+        )
+        assert res == 1, f"Expected Direction 1 for southbound trip, got {res}"
+
     def test_level3_trip_id_tokens(self):
         """Verifies trip_id tokens resolve when route name lacks direction cues."""
         assert resolve_direction(route_short_name="502", trip_id="DL_502_UP_0615") == 0
@@ -153,17 +190,21 @@ class TestDayTypeMappingAndTimestamps:
         assert days == {"WEEKDAY", "SATURDAY", "SUNDAY"}
 
     def test_build_service_calendar_map_with_exceptions(self):
-        """Verifies calendar_dates.txt exception overrides (type 1: add, type 2: remove)."""
+        """Verifies calendar_dates.txt exception overrides (type 1: add, type 2: single-date holiday does not purge regular weekly service)."""
         cal_df = pd.DataFrame([
-            {"service_id": "S1", "monday": 1, "tuesday": 1, "wednesday": 1, "thursday": 1, "friday": 1, "saturday": 1, "sunday": 1},
+            {"service_id": "S1", "monday": 1, "tuesday": 1, "wednesday": 1, "thursday": 1, "friday": 1, "saturday": 1, "sunday": 0},
+            {"service_id": "S2", "monday": 0, "tuesday": 0, "wednesday": 0, "thursday": 0, "friday": 0, "saturday": 0, "sunday": 0},
         ])
-        # 2026-01-26 is a Monday (Weekday) -> exception_type 2 removes Weekday service
+        # 2026-01-26 is a Monday (holiday) -> exception_type 2 does NOT permanently purge WEEKDAY from regular weekly service S1
+        # S2 has all 0s in calendar.txt, but 2026-01-25 (Sunday) is added via exception_type 1
         cal_dates_df = pd.DataFrame([
             {"service_id": "S1", "date": "20260126", "exception_type": 2},
+            {"service_id": "S2", "date": "20260125", "exception_type": 1},
         ])
         s_map = build_service_calendar_map(cal_df, cal_dates_df)
-        assert "WEEKDAY" not in s_map["S1"]
+        assert "WEEKDAY" in s_map["S1"], "Regular weekday schedule must not be purged by single holiday exception"
         assert "SATURDAY" in s_map["S1"]
+        assert s_map["S2"] == {"SUNDAY"}, "Exception-based service S2 should only have SUNDAY added"
 
     def test_get_day_types_fallback(self):
         """Verifies missing service_id defaults to universal daily service."""

@@ -1,0 +1,41 @@
+# crowd.yaml — Crowding thresholds and terminology
+# Aligned directly with Delhi Transport Stack Hackathon 2026 Problem Statement
+
+thresholds:
+  low_max_percentile: 40       # P0 - P40 -> Seats Available
+  moderate_max_percentile: 75  # P40 - P75 -> Standing Room
+  high_min_percentile: 75      # P75+ -> Crowded
+
+categories:
+  low:
+    label: "Seats Available"
+    code: "seats_available"
+    color: "#22A06B"           # Emerald Green
+    icon: "armchair"
+    description: "Plenty of seats available; comfortable journey."
+  moderate:
+    label: "Standing Room"
+    code: "standing_room"
+    color: "#F5A623"           # Warm Amber
+    icon: "users"
+    description: "Few seats left; standing room available."
+  high:
+    label: "Crowded"
+    code: "crowded"
+    color: "#E5484D"           # Crimson Red
+    icon: "alert-triangle"
+    description: "Heavily crowded bus; difficult to board or find standing space."
+
+# Assumptions (Transparently documented on About page)
+assumptions:
+  bus_capacity:
+    standard_non_ac: 60
+    standard_ac: 55
+    mini_bus: 35
+    verified: false
+    source: "Standard Delhi Transport Corporation (DTC) bus capacity estimate"
+  expansion_factor:
+    value: 2.3
+    assumption: true
+    source: "Estimated expansion factor accounting for un-ticketed passengers and free female travel (Pink Passes)"
+

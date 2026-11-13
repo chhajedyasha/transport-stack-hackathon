@@ -232,8 +232,8 @@ class TestAdversarialDirectionalityResolver:
         ]
 
         # Valid delimited cues
-        up_cues_delimited = ["UP", "OUTBOUND", "ONWARD", "OUT", "CLW", "CLOCKWISE", "(+)", "PLUS"]
-        dn_cues_delimited = ["DOWN", "DN", "INBOUND", "RETURN", "IN", "CCLW", "COUNTERCLOCKWISE", "(-)", "MINUS"]
+        up_cues_delimited = ["UP", "OUTBOUND", "ONWARD", "OUT", "CCLW", "COUNTERCLOCKWISE", "(+)", "PLUS"]
+        dn_cues_delimited = ["DOWN", "DN", "INBOUND", "RETURN", "IN", "CLW", "CLOCKWISE", "(-)", "MINUS"]
         delimiters = [" ", "_", "-", "/", " - ", " / "]
 
         # Undelimited suffixes (supported by regex lookbehind [0-9A-Z])
@@ -457,52 +457,40 @@ class TestAdversarialDirectionalityResolver:
             stop_coords=southbound_coords,
         )
 
-        # We document that the current implementation returns 0 due to the 'GROUP' false match
-        # Expected correct behavior: 1 (Southbound)
-        # Actual behavior: 0 (False positive UP)
-        is_vulnerable = (resolved == 0)
-        assert is_vulnerable, "Vulnerability verified: 'GROUP' in headsign falsely triggered Level 2 Direction 0"
+        # Remediated: 'GROUP' does not falsely match UP; Southbound trajectory correctly resolves to Direction 1
+        assert resolved == 1, f"Remediated: 'GROUP' in headsign correctly resolves to Direction 1, got {resolved}"
 
     def test_adversarial_vulnerability_undelimited_extended_cues(self):
-        """EMPIRICAL ADVERSARIAL FINDING 2:
-        Exposes asymmetry where undelimited 'UP', 'DOWN', and 'DN' are matched,
-        but undelimited extended cues ('INBOUND', 'CCLW', 'RETURN') are not matched in Level 2,
-        falling back to default Direction 0 instead of returning Direction 1.
+        """EMPIRICAL ADVERSARIAL FINDING 2 (Remediated):
+        Verifies undelimited 'UP', 'DOWN', 'DN', and extended cues ('INBOUND', 'CCLW', 'CLW')
+        are matched in Level 2.
         """
-        # '101DOWN' resolves to 1 because (?<=[0-9A-Z])(?:DOWN|DN)\\b is supported
         assert resolve_direction(route_short_name="101DOWN") == 1
-
-        # '101INBOUND' and '101CCLW' fail Level 2 regex because they lack delimiters,
-        # and fall through to default fallback 0 instead of returning Direction 1
         res_inbound = resolve_direction(route_short_name="101INBOUND")
         res_cclw = resolve_direction(route_short_name="101CCLW")
+        res_clw = resolve_direction(route_short_name="101CLW")
 
-        is_inbound_missed = (res_inbound == 0)
-        is_cclw_missed = (res_cclw == 0)
-
-        assert is_inbound_missed, "Vulnerability verified: '101INBOUND' fails Level 2 regex and falls back to 0"
-        assert is_cclw_missed, "Vulnerability verified: '101CCLW' fails Level 2 regex and falls back to 0"
+        assert res_inbound == 1, f"Remediated: '101INBOUND' resolves to Direction 1, got {res_inbound}"
+        assert res_cclw == 0, f"Remediated: '101CCLW' resolves to Direction 0, got {res_cclw}"
+        assert res_clw == 1, f"Remediated: '101CLW' resolves to Direction 1, got {res_clw}"
 
     def test_adversarial_vulnerability_parentheses_and_brackets(self):
-        """EMPIRICAL ADVERSARIAL FINDING 3:
-        Exposes delimiter blindspot where standard transit notations like '(DOWN)', '[DOWN]',
-        '(DN)', '[DN]', '(INBOUND)' fail Level 2 regex matching because parentheses '()' and
-        brackets '[]' are omitted from the delimiter class [\\s_\\-/].
-        Without a trip_id token or coordinates, these fall through to default fallback 0,
-        inverting directionality.
+        """EMPIRICAL ADVERSARIAL FINDING 3 (Remediated):
+        Verifies standard transit notations like '(DOWN)', '[DOWN]', '(DN)', '[DN]', '(INBOUND)'
+        match Level 2 regex through delimiters '()' and '[]'.
         """
         assert resolve_direction(route_short_name="502 - DOWN") == 1  # Hyphen works
 
-        # Parenthesized / Bracketed fails Level 2 and falls through to 0
+        # Parenthesized / Bracketed match Level 2 and resolve to Direction 1
         res_paren_down = resolve_direction(route_short_name="502 (DOWN)")
         res_bracket_down = resolve_direction(route_short_name="502 [DOWN]")
         res_paren_dn = resolve_direction(route_short_name="502 (DN)")
         res_paren_inbound = resolve_direction(route_short_name="502 (INBOUND)")
 
-        assert res_paren_down == 0, "Vulnerability verified: '502 (DOWN)' fails Level 2 and returns 0"
-        assert res_bracket_down == 0, "Vulnerability verified: '502 [DOWN]' fails Level 2 and returns 0"
-        assert res_paren_dn == 0, "Vulnerability verified: '502 (DN)' fails Level 2 and returns 0"
-        assert res_paren_inbound == 0, "Vulnerability verified: '502 (INBOUND)' fails Level 2 and returns 0"
+        assert res_paren_down == 1, f"Remediated: '502 (DOWN)' resolves to Direction 1, got {res_paren_down}"
+        assert res_bracket_down == 1, f"Remediated: '502 [DOWN]' resolves to Direction 1, got {res_bracket_down}"
+        assert res_paren_dn == 1, f"Remediated: '502 (DN)' resolves to Direction 1, got {res_paren_dn}"
+        assert res_paren_inbound == 1, f"Remediated: '502 (INBOUND)' resolves to Direction 1, got {res_paren_inbound}"
 
 
 # ===========================================================================

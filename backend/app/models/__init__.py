@@ -15,6 +15,13 @@ from app.models.transit import (
     drop_all_tables,
 )
 
+from app.models.demand import (
+    SysRuntimeMetadata,
+    EtmStagingTicket,
+    FactZoneDemand,
+    FactZoneDemandStaging,
+)
+
 __all__ = [
     "Base",
     "DimStop",
@@ -23,8 +30,13 @@ __all__ = [
     "RelPatternStop",
     "DimTripStart",
     "FactRouteSupply",
+    "SysRuntimeMetadata",
+    "EtmStagingTicket",
+    "FactZoneDemand",
+    "FactZoneDemandStaging",
     "get_engine",
     "get_session_factory",
     "create_all_tables",
     "drop_all_tables",
 ]
+

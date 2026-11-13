@@ -27,6 +27,7 @@ from app.models.transit import (
     DimTripStart,
     FactRouteSupply,
     create_all_tables,
+    drop_all_tables,
 )
 from app.services.direction_resolver import (
     resolve_direction,
@@ -82,16 +83,8 @@ def ingest_gtfs_directory(
     engine = create_engine(db_url, echo=False)
 
     if clean_tables:
+        drop_all_tables(engine)
         create_all_tables(engine)
-        # Clear tables in reverse dependency order
-        with Session(engine) as s:
-            s.execute(delete(FactRouteSupply))
-            s.execute(delete(DimTripStart))
-            s.execute(delete(RelPatternStop))
-            s.execute(delete(DimRoutePattern))
-            s.execute(delete(DimRoute))
-            s.execute(delete(DimStop))
-            s.commit()
 
     # -----------------------------------------------------------------------
     # Step 1: Load stops.txt -> dim_stops
@@ -181,14 +174,17 @@ def ingest_gtfs_directory(
     )
 
     trip_meta: Dict[str, Dict[str, Any]] = {}
-    for _, row in trips_df.iterrows():
-        tid = str(row["trip_id"])
+    for row in trips_df.itertuples(index=False):
+        tid = str(row.trip_id)
+        d_id = getattr(row, "direction_id", None)
+        s_id = getattr(row, "shape_id", None)
+        h_sign = getattr(row, "trip_headsign", None)
         trip_meta[tid] = {
-            "route_id": str(row["route_id"]),
-            "service_id": str(row["service_id"]),
-            "direction_id": row.get("direction_id") if pd.notnull(row.get("direction_id")) else None,
-            "shape_id": str(row["shape_id"]) if pd.notnull(row.get("shape_id")) else None,
-            "trip_headsign": str(row["trip_headsign"]) if pd.notnull(row.get("trip_headsign")) else None,
+            "route_id": str(row.route_id),
+            "service_id": str(row.service_id),
+            "direction_id": d_id if pd.notnull(d_id) else None,
+            "shape_id": str(s_id) if pd.notnull(s_id) else None,
+            "trip_headsign": str(h_sign) if pd.notnull(h_sign) else None,
         }
 
     # -----------------------------------------------------------------------
@@ -207,11 +203,11 @@ def ingest_gtfs_directory(
         dtype={"trip_id": str, "stop_id": str, "stop_sequence": int},
         usecols=["trip_id", "departure_time", "stop_id", "stop_sequence"],
     ):
-        for _, row in chunk.iterrows():
-            tid = str(row["trip_id"])
-            seq = int(row["stop_sequence"])
-            sid = str(row["stop_id"])
-            dep_time = str(row["departure_time"]).strip()
+        for row in chunk.itertuples(index=False):
+            tid = str(row.trip_id)
+            seq = int(row.stop_sequence)
+            sid = str(row.stop_id)
+            dep_time = str(row.departure_time).strip()
             trip_stops[tid].append((seq, sid, dep_time))
 
     # -----------------------------------------------------------------------
@@ -263,18 +259,22 @@ def ingest_gtfs_directory(
             pattern_definitions[pattern_key] = pid
 
             num_stops = len(stops)
+
+            # Calculate cumulative distances and 8-zone partition
+            cum_distances = compute_cumulative_distances(s_coords)
+            tot_dist = cum_distances[-1] if cum_distances else 0.0
+
             pattern_records.append({
                 "pattern_id": pid,
                 "route_id": route_id,
                 "direction_id": dir_id,
                 "stop_count": num_stops,
+                "total_dist_km": round(float(tot_dist), 3),
                 "start_stop_id": origin_stop_id,
                 "end_stop_id": term_stop_id,
                 "shape_id": meta["shape_id"],
             })
 
-            # Calculate cumulative distances and 8-zone partition
-            cum_distances = compute_cumulative_distances(s_coords)
             raw_sequences = [s[0] for s in stops]
             seq_to_zone = ZonePartitioner.partition_pattern_stops(raw_sequences)
 
@@ -291,7 +291,12 @@ def ingest_gtfs_directory(
 
         # Origin departure time parsing and 24h+ rollover normalization
         origin_dep_raw = stops[0][2]
-        _, dep_hour, norm_dep_str, _ = parse_gtfs_time_to_seconds(origin_dep_raw)
+        try:
+            _, dep_hour, norm_dep_str, _ = parse_gtfs_time_to_seconds(origin_dep_raw)
+        except Exception as e:
+            logger.warning(f"Error parsing departure time '{origin_dep_raw}' on trip {tid}: {e}. Fallback to 00:00:00")
+            dep_hour = 0
+            norm_dep_str = "00:00:00"
 
         # Expand trip across active canonical day types
         active_day_types = get_day_types_for_service(meta["service_id"], service_to_days)
@@ -369,7 +374,14 @@ def ingest_gtfs_directory(
 # Query Interface Methods for Downstream Modules
 # ---------------------------------------------------------------------------
 
-def get_stop_sequence(pattern_id: str, session: Session) -> List[Tuple[int, str, int]]:
+def get_default_engine(db_url: Optional[str] = None) -> Engine:
+    """Retrieves default SQLAlchemy engine bound to local crowdwise.db."""
+    default_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "crowdwise.db"))
+    url = db_url or os.environ.get("CROWDWISE_DB_URL", f"sqlite:///{default_path}")
+    return create_engine(url)
+
+
+def get_stop_sequence(pattern_id: str, session: Optional[Session] = None) -> List[Tuple[int, str, int]]:
     """Retrieves ordered (stop_sequence, stop_id, zone_id) tuples for a route pattern.
 
     Contract: M1 <-> M2
@@ -379,21 +391,38 @@ def get_stop_sequence(pattern_id: str, session: Session) -> List[Tuple[int, str,
         .where(RelPatternStop.pattern_id == pattern_id)
         .order_by(RelPatternStop.stop_sequence)
     )
-    return list(session.execute(stmt).all())
+    if session is not None:
+        return list(session.execute(stmt).all())
+
+    engine = get_default_engine()
+    with Session(engine) as auto_session:
+        return list(auto_session.execute(stmt).all())
 
 
-def load_all_stops(session: Session) -> List[Dict[str, Any]]:
+def load_all_stops(session: Optional[Session] = None) -> List[Dict[str, Any]]:
     """Loads all physical stops from dim_stops as a list of dicts for search indexing."""
     stmt = select(DimStop)
-    records = session.execute(stmt).scalars().all()
-    return [r.to_dict() for r in records]
+    if session is not None:
+        records = session.execute(stmt).scalars().all()
+        return [r.to_dict() for r in records]
+
+    engine = get_default_engine()
+    with Session(engine) as auto_session:
+        records = auto_session.execute(stmt).scalars().all()
+        return [r.to_dict() for r in records]
 
 
-def get_route_patterns(route_id: str, session: Session) -> List[Dict[str, Any]]:
+def get_route_patterns(route_id: str, session: Optional[Session] = None) -> List[Dict[str, Any]]:
     """Retrieves all patterns associated with a route_id."""
     stmt = select(DimRoutePattern).where(DimRoutePattern.route_id == route_id)
-    records = session.execute(stmt).scalars().all()
-    return [r.to_dict() for r in records]
+    if session is not None:
+        records = session.execute(stmt).scalars().all()
+        return [r.to_dict() for r in records]
+
+    engine = get_default_engine()
+    with Session(engine) as auto_session:
+        records = auto_session.execute(stmt).scalars().all()
+        return [r.to_dict() for r in records]
 
 
 def get_route_supply(
@@ -401,7 +430,7 @@ def get_route_supply(
     direction_id: int,
     day_type: str,
     hour: int,
-    session: Session,
+    session: Optional[Session] = None,
 ) -> Optional[Dict[str, Any]]:
     """Retrieves scheduled route supply metrics for given route, direction, day type, and hour."""
     stmt = select(FactRouteSupply).where(
@@ -410,5 +439,11 @@ def get_route_supply(
         FactRouteSupply.day_type == day_type,
         FactRouteSupply.hour == hour,
     )
-    record = session.execute(stmt).scalar_one_or_none()
-    return record.to_dict() if record else None
+    if session is not None:
+        record = session.execute(stmt).scalar_one_or_none()
+        return record.to_dict() if record else None
+
+    engine = get_default_engine()
+    with Session(engine) as auto_session:
+        record = auto_session.execute(stmt).scalar_one_or_none()
+        return record.to_dict() if record else None

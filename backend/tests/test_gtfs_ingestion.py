@@ -80,7 +80,14 @@ class TestGTFSIngestionIntegration:
         with Session(engine) as s:
             patterns = get_route_patterns("502", s)
             assert len(patterns) >= 1
-            pid = patterns[0]["pattern_id"]
+            p0 = patterns[0]
+            pid = p0["pattern_id"]
+
+            # Verify contract columns
+            assert "total_dist_km" in p0, "total_dist_km missing from dim_route_patterns"
+            assert p0["total_dist_km"] > 0.0, f"total_dist_km should be positive, got {p0['total_dist_km']}"
+            assert "num_stops" in p0, "num_stops missing from dim_route_patterns"
+            assert p0["num_stops"] == p0["stop_count"]
 
             seqs = get_stop_sequence(pid, s)
             assert len(seqs) >= 10
@@ -89,6 +96,19 @@ class TestGTFSIngestionIntegration:
             # Zones must be between 0 and 7
             for sq in seqs:
                 assert 0 <= sq[2] <= 7
+
+    def test_query_get_stop_sequence_optional_session(self, monkeypatch, ingested_db):
+        """Verifies get_stop_sequence can be called without explicit session parameter."""
+        engine, _ = ingested_db
+        monkeypatch.setenv("CROWDWISE_DB_URL", str(engine.url))
+        patterns = get_route_patterns("502")
+        assert len(patterns) >= 1
+        pid = patterns[0]["pattern_id"]
+
+        # Call get_stop_sequence with only pattern_id
+        seqs = get_stop_sequence(pid)
+        assert len(seqs) >= 10
+        assert [sq[0] for sq in seqs] == list(range(len(seqs)))
 
     def test_query_get_route_supply(self, ingested_db):
         """Verifies get_route_supply returns valid trips_per_hour and finite headway."""

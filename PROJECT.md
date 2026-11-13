@@ -90,8 +90,8 @@ CrowdWise is a bus journey planner for Delhi that estimates and visualizes expec
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M0 | Dual-Track E2E Testing Track | Requirement-driven opaque-box test harness & test suite (Tiers 1-4) | None | IN_PROGRESS |
-| M1 | Static Transit Layer & Ingestion | GTFS ingestion, compact tables, directionality, 8-zone partition, stop search | None | PLANNED |
+| M0 | Dual-Track E2E Testing Track | Requirement-driven opaque-box test harness & test suite (Tiers 1-4) | None | DONE (348 tests passed, TEST_READY.md published) |
+| M1 | Static Transit Layer & Ingestion | GTFS ingestion, compact tables, directionality, 8-zone partition, stop search | None | DONE (118 backend tests, 25 E2E M1 tests, audit CLEAN) |
 | M2 | Data Pipeline & Demand Reconstruction | ETM pipeline modes A/B/C, synthetic simulator, truth loads, swap script, PII hashing | M1 | PLANNED |
 | M3 | ML & Crowdedness Estimation | Chronological split, baseline & Random Forest, RCI 0-100, sanity check harness | M1, M2 | PLANNED |
 | M4 | Journey Planner & Backend API | Flask REST API, SQLAlchemy ORM, multi-objective scoring, detour filter, envelope | M1, M3 | PLANNED |

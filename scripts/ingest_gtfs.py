@@ -43,7 +43,7 @@ def main():
     )
     args = parser.parse_args()
 
-    gtfs_dir = os.path.abspath(args.gtfs-dir if hasattr(args, "gtfs-dir") else args.gtfs_dir)
+    gtfs_dir = os.path.abspath(args.gtfs_dir)
     db_url = args.db_url
 
     logger.info(f"Target GTFS Directory: {gtfs_dir}")

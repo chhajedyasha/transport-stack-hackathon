@@ -76,9 +76,19 @@ class DimRoutePattern(Base):
     route_id: Mapped[str] = mapped_column(String(64), ForeignKey("dim_routes.route_id"), nullable=False)
     direction_id: Mapped[int] = mapped_column(Integer, nullable=False)  # 0 = UP, 1 = DOWN
     stop_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_dist_km: Mapped[float] = mapped_column(Float, nullable=True, default=0.0)
     start_stop_id: Mapped[str] = mapped_column(String(64), ForeignKey("dim_stops.stop_id"), nullable=False)
     end_stop_id: Mapped[str] = mapped_column(String(64), ForeignKey("dim_stops.stop_id"), nullable=False)
     shape_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+    @property
+    def num_stops(self) -> int:
+        """Compatibility alias for stop_count per PROJECT.md interface contract."""
+        return self.stop_count
+
+    @num_stops.setter
+    def num_stops(self, value: int) -> None:
+        self.stop_count = value
 
     # Relationships
     route: Mapped["DimRoute"] = relationship("DimRoute", back_populates="patterns")
@@ -102,6 +112,8 @@ class DimRoutePattern(Base):
             "route_id": self.route_id,
             "direction_id": self.direction_id,
             "stop_count": self.stop_count,
+            "num_stops": self.stop_count,
+            "total_dist_km": self.total_dist_km,
             "start_stop_id": self.start_stop_id,
             "end_stop_id": self.end_stop_id,
             "shape_id": self.shape_id,
@@ -212,13 +224,14 @@ class FactRouteSupply(Base):
 def _set_sqlite_pragma(dbapi_connection, connection_record):
     """Enforces SQLite foreign keys for referential integrity."""
     # Only execute pragma on sqlite connections
-    cursor = dbapi_connection.cursor()
-    try:
-        cursor.execute("PRAGMA foreign_keys=ON")
-    except Exception:
-        pass
-    finally:
-        cursor.close()
+    if dbapi_connection.__class__.__module__.startswith("sqlite"):
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute("PRAGMA foreign_keys=ON")
+        except Exception:
+            pass
+        finally:
+            cursor.close()
 
 
 def get_engine(db_url: str, echo: bool = False) -> Engine:

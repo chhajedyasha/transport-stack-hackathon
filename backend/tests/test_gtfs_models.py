@@ -95,6 +95,7 @@ class TestGTFSModels:
             route_id=route.route_id,
             direction_id=0,
             stop_count=2,
+            total_dist_km=5.4,
             start_stop_id=stop1.stop_id,
             end_stop_id=stop2.stop_id,
         )
@@ -107,12 +108,16 @@ class TestGTFSModels:
         db_session.add_all([ps1, ps2])
         db_session.commit()
 
-        # Verify back-population
+        # Verify back-population and contract columns
         reloaded_pattern = db_session.execute(select(DimRoutePattern).where(DimRoutePattern.pattern_id == "PAT_502_0_01")).scalar_one()
         assert len(reloaded_pattern.pattern_stops) == 2
         assert reloaded_pattern.pattern_stops[0].stop_sequence == 0
         assert reloaded_pattern.pattern_stops[0].zone_id == 0
         assert reloaded_pattern.pattern_stops[1].cum_dist_km == 5.4
+        assert reloaded_pattern.total_dist_km == 5.4
+        assert reloaded_pattern.num_stops == 2
+        assert reloaded_pattern.to_dict()["total_dist_km"] == 5.4
+        assert reloaded_pattern.to_dict()["num_stops"] == 2
 
     def test_dim_trip_starts_crud(self, db_session, sample_stops, sample_routes):
         """Verifies DimTripStart creation and query."""

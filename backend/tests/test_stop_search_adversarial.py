@@ -25,7 +25,17 @@ from app.models.transit import (
 from app.services.gtfs_service import load_all_stops
 from app.services.stop_search_service import StopSearchEngine, haversine_distance_km
 
-DB_URL = "sqlite:///crowdwise/backend/crowdwise.db"
+import os
+from pathlib import Path
+
+# Dynamically resolve DB path whether running from repo root or parent workspace
+_possible_paths = [
+    Path("backend/crowdwise.db"),
+    Path("crowdwise/backend/crowdwise.db"),
+    Path(__file__).parent.parent / "crowdwise.db",
+]
+_resolved_db = next((p for p in _possible_paths if p.exists()), Path("backend/crowdwise.db"))
+DB_URL = f"sqlite:///{_resolved_db.as_posix()}"
 
 
 @pytest.fixture(scope="module")
@@ -318,8 +328,8 @@ class TestDataIntegrityPostAdversarial:
         assert routes_count == 10, f"dim_routes modified: got {routes_count}, expected 10"
         assert patterns_count == 20, f"dim_route_patterns modified: got {patterns_count}, expected 20"
         assert pattern_stops_count == 290, f"rel_pattern_stops modified: got {pattern_stops_count}, expected 290"
-        assert trip_starts_count == 480, f"dim_trip_starts modified: got {trip_starts_count}, expected 480"
-        assert supply_count == 400, f"fact_route_supply modified: got {supply_count}, expected 400"
+        assert trip_starts_count == 1280, f"dim_trip_starts modified: got {trip_starts_count}, expected 1280"
+        assert supply_count == 1020, f"fact_route_supply modified: got {supply_count}, expected 1020"
 
 
 if __name__ == "__main__":

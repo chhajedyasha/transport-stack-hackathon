@@ -19,20 +19,34 @@ R_EARTH_KM = 6371.0088
 # Level 2 Regex Patterns for Route Short Name / Long Name / Headsign
 REGEX_DIR_0 = re.compile(
     r'(?:'
-    r'(?<=[0-9A-Z])UP\b|'
-    r'(?:^|[\s_\-/])(?:UP|OUTBOUND|ONWARD|OUT|CLW|CLOCKWISE)(?:[\s_\-/]|$)|'
+    r'(?<=[0-9])UP\b|(?<=[0-9][A-Z])UP\b|(?<=[0-9][A-Z]{2})UP\b|(?<=[0-9][A-Z]{3})UP\b|(?<=[0-9][A-Z]{4})UP\b|'
+    r'(?<=(?:TMS|OMS))UP\b|'
+    r'(?<=[0-9])(?:OUTBOUND|ONWARD|CCLW|COUNTERCLOCKWISE)\b|'
+    r'(?<=[0-9][A-Z])(?:OUTBOUND|ONWARD|CCLW|COUNTERCLOCKWISE)\b|'
+    r'(?<=[0-9][A-Z]{2})(?:OUTBOUND|ONWARD|CCLW|COUNTERCLOCKWISE)\b|'
+    r'(?<=[0-9][A-Z]{3})(?:OUTBOUND|ONWARD|CCLW|COUNTERCLOCKWISE)\b|'
+    r'(?<=[0-9][A-Z]{4})(?:OUTBOUND|ONWARD|CCLW|COUNTERCLOCKWISE)\b|'
+    r'(?<=(?:TMS|OMS))(?:OUTBOUND|ONWARD|CCLW|COUNTERCLOCKWISE)\b|'
+    r'(?:^|[\s_\-/\(\)\[\]:.,])(?:UP|OUTBOUND|ONWARD|OUT|CCLW|COUNTERCLOCKWISE)(?:[\s_\-/\(\)\[\]:.,]|$)|'
     r'\(\+\)|'
-    r'(?:^|[\s_\-/])PLUS(?:[\s_\-/]|$)'
+    r'(?:^|[\s_\-/\(\)\[\]:.,])PLUS(?:[\s_\-/\(\)\[\]:.,]|$)'
     r')',
     re.IGNORECASE
 )
 
 REGEX_DIR_1 = re.compile(
     r'(?:'
-    r'(?<=[0-9A-Z])(?:DOWN|DN)\b|'
-    r'(?:^|[\s_\-/])(?:DOWN|DN|INBOUND|RETURN|IN|CCLW|COUNTERCLOCKWISE)(?:[\s_\-/]|$)|'
+    r'(?<=[0-9])(?:DOWN|DN)\b|(?<=[0-9][A-Z])(?:DOWN|DN)\b|(?<=[0-9][A-Z]{2})(?:DOWN|DN)\b|(?<=[0-9][A-Z]{3})(?:DOWN|DN)\b|(?<=[0-9][A-Z]{4})(?:DOWN|DN)\b|'
+    r'(?<=(?:TMS|OMS))(?:DOWN|DN)\b|'
+    r'(?<=[0-9])(?:INBOUND|RETURN|CLW|CLOCKWISE)\b|'
+    r'(?<=[0-9][A-Z])(?:INBOUND|RETURN|CLW|CLOCKWISE)\b|'
+    r'(?<=[0-9][A-Z]{2})(?:INBOUND|RETURN|CLW|CLOCKWISE)\b|'
+    r'(?<=[0-9][A-Z]{3})(?:INBOUND|RETURN|CLW|CLOCKWISE)\b|'
+    r'(?<=[0-9][A-Z]{4})(?:INBOUND|RETURN|CLW|CLOCKWISE)\b|'
+    r'(?<=(?:TMS|OMS))(?:INBOUND|RETURN|CLW|CLOCKWISE)\b|'
+    r'(?:^|[\s_\-/\(\)\[\]:.,])(?:DOWN|DN|INBOUND|RETURN|IN|CLW|CLOCKWISE)(?:[\s_\-/\(\)\[\]:.,]|$)|'
     r'\(\-\)|'
-    r'(?:^|[\s_\-/])MINUS(?:[\s_\-/]|$)'
+    r'(?:^|[\s_\-/\(\)\[\]:.,])MINUS(?:[\s_\-/\(\)\[\]:.,]|$)'
     r')',
     re.IGNORECASE
 )
@@ -135,20 +149,27 @@ def resolve_direction_from_coords(coords: List[Tuple[float, float]]) -> int:
 
 
 def resolve_direction(
+    route_name: Optional[Union[str, int, float]] = None,
+    trip_id: Optional[str] = None,
     explicit_direction_id: Optional[Union[int, str, float]] = None,
     route_short_name: Optional[str] = None,
     route_long_name: Optional[str] = None,
-    trip_id: Optional[str] = None,
     trip_headsign: Optional[str] = None,
     stop_coords: Optional[List[Tuple[float, float]]] = None,
+    **kwargs: Any,
 ) -> int:
     """Resolves route-trip directionality using the deterministic 4-level hierarchy.
 
+    Contract:
+        resolve_direction(route_name: str, trip_id: str) -> int (0 for UP/outbound, 1 for DOWN/inbound)
+        Also accepts explicit direction id or full keyword arguments.
+
     Args:
+        route_name: Route short name or identifier (e.g. '502DOWN', '102AUP', or integer direction id).
+        trip_id: Unique trip identifier string.
         explicit_direction_id: Value from trips.txt (e.g. 0, 1, '0', '1', None).
         route_short_name: Route short name (e.g. '102AUP', '761DOWN').
         route_long_name: Route long name / corridor description.
-        trip_id: Unique trip identifier string.
         trip_headsign: Trip destination headsign.
         stop_coords: Ordered list of (lat, lon) coordinates for pattern stops.
 
@@ -156,11 +177,32 @@ def resolve_direction(
         0 (UP / Outbound / CCW) or 1 (DOWN / Inbound / CW). Never returns None.
     """
     # -------------------------------------------------------------
+    # Disambiguate route_name vs explicit_direction_id
+    # -------------------------------------------------------------
+    actual_explicit_id = explicit_direction_id
+    if actual_explicit_id is None and route_name is not None:
+        if isinstance(route_name, (int, float)):
+            if int(route_name) in (0, 1):
+                actual_explicit_id = int(route_name)
+        elif isinstance(route_name, str):
+            clean_rn = route_name.strip()
+            if clean_rn in ("0", "1"):
+                actual_explicit_id = int(clean_rn)
+            else:
+                if not route_short_name:
+                    route_short_name = route_name
+    elif route_name is not None and not route_short_name and isinstance(route_name, str):
+        route_short_name = route_name
+
+    if "explicit_direction" in kwargs and actual_explicit_id is None:
+        actual_explicit_id = kwargs["explicit_direction"]
+
+    # -------------------------------------------------------------
     # Level 1: Explicit GTFS direction_id
     # -------------------------------------------------------------
-    if explicit_direction_id is not None:
+    if actual_explicit_id is not None:
         try:
-            val_str = str(explicit_direction_id).strip()
+            val_str = str(actual_explicit_id).strip()
             if val_str in ("0", "1"):
                 return int(val_str)
             val_float = float(val_str)
@@ -174,7 +216,7 @@ def resolve_direction(
     # -------------------------------------------------------------
     names_to_check = [name for name in [route_short_name, route_long_name, trip_headsign] if name]
     for name in names_to_check:
-        clean_name = name.strip()
+        clean_name = str(name).strip()
         is_dir_0 = bool(REGEX_DIR_0.search(clean_name))
         is_dir_1 = bool(REGEX_DIR_1.search(clean_name))
 
@@ -187,7 +229,7 @@ def resolve_direction(
     # Level 3: Trip ID Suffix & Delimiter Inspection
     # -------------------------------------------------------------
     if trip_id:
-        clean_trip_id = trip_id.strip()
+        clean_trip_id = str(trip_id).strip()
         trip_is_dir_0 = bool(REGEX_TRIP_DIR_0.search(clean_trip_id))
         trip_is_dir_1 = bool(REGEX_TRIP_DIR_1.search(clean_trip_id))
 

@@ -29,6 +29,17 @@ from app.services.gtfs_service import (
     get_route_supply,
 )
 
+from app.services.etm_service import (
+    profile_etm_stream,
+    anonymize_ticket_record,
+    hash_commuter_id,
+    reconstruct_mode_a,
+    reconstruct_mode_b,
+    disaggregate_mode_c,
+    aggregate_trip_zones,
+    DemandReconstructionPipeline,
+)
+
 __all__ = [
     "resolve_direction",
     "compute_haversine_distance",
@@ -49,4 +60,13 @@ __all__ = [
     "load_all_stops",
     "get_route_patterns",
     "get_route_supply",
+    "profile_etm_stream",
+    "anonymize_ticket_record",
+    "hash_commuter_id",
+    "reconstruct_mode_a",
+    "reconstruct_mode_b",
+    "disaggregate_mode_c",
+    "aggregate_trip_zones",
+    "DemandReconstructionPipeline",
 ]
+
