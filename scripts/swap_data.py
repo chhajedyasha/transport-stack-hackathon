@@ -156,10 +156,11 @@ def run_data_swap(
     staging_df["fare_paid"] = clean_df["fare_paid"]
 
     # Genuine 64-hex salted HMAC-SHA-256 hash for smartcard / commuter media
+    ticket_fallback_hashes = clean_df["ticket_id"].astype(str).apply(anonymizer.hash_pii)
     if "smartcard_hash" in clean_df.columns and clean_df["smartcard_hash"].notna().any():
-        staging_df["smartcard_hash"] = clean_df["smartcard_hash"]
+        staging_df["smartcard_hash"] = clean_df["smartcard_hash"].fillna(ticket_fallback_hashes)
     elif "smartcard_hash" in sanitized_raw_df.columns and sanitized_raw_df["smartcard_hash"].notna().any():
-        staging_df["smartcard_hash"] = sanitized_raw_df["smartcard_hash"]
+        staging_df["smartcard_hash"] = sanitized_raw_df["smartcard_hash"].fillna(ticket_fallback_hashes)
     else:
         # Check candidate media columns in raw or sanitized data
         media_col = None
@@ -172,10 +173,11 @@ def run_data_swap(
                 break
         if media_col:
             src_series = sanitized_raw_df[media_col] if media_col in sanitized_raw_df.columns else df_raw[media_col]
-            staging_df["smartcard_hash"] = src_series.astype(str).apply(anonymizer.hash_pii)
+            media_hashes = src_series.astype(str).apply(anonymizer.hash_pii)
+            staging_df["smartcard_hash"] = media_hashes.fillna(ticket_fallback_hashes)
         else:
             # Derive genuine 64-hex HMAC hash from ticket_id
-            staging_df["smartcard_hash"] = clean_df["ticket_id"].astype(str).apply(anonymizer.hash_pii)
+            staging_df["smartcard_hash"] = ticket_fallback_hashes
 
     with engine.begin() as conn:
         conn.execute(text("DROP TABLE IF EXISTS etm_staging_tickets;"))
@@ -254,7 +256,7 @@ def run_data_swap(
     # -----------------------------------------------------------------------
     logger.info("[Step 6/9] Triggering ML Model Retraining Pipeline...")
     train_script = os.path.join(script_dir, "train_models.py")
-    if os.path.exists(train_script) and os.path.exists(staging_parquet) and os.path.getsize(staging_parquet) > 0:
+    if not dry_run and os.path.exists(train_script) and os.path.exists(staging_parquet) and os.path.getsize(staging_parquet) > 0:
         logger.info(f"Invoking {train_script} with staging dataset...")
         try:
             res = subprocess.run([sys.executable, train_script, "--data-path", staging_parquet], check=True, capture_output=True, text=True)
@@ -263,7 +265,7 @@ def run_data_swap(
             logger.error(f"Retraining failed: {e.stderr}")
             raise
     else:
-        logger.info("Retraining script not found or staging dataset empty; skipping retraining step gracefully.")
+        logger.info("Dry-run mode, retraining script not found, or staging dataset empty; skipping retraining step gracefully.")
 
     # -----------------------------------------------------------------------
     # STEP 7: Atomic Pointer & Table Swap

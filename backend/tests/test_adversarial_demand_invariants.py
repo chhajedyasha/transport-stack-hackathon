@@ -226,6 +226,16 @@ class TestAdversarialModeB:
         for k in probs_cap:
             assert probs_cap[k] == pytest.approx(probs_full_override[k], abs=1e-5)
 
+        # Plural adapter wrapper verification: compute_alighting_probabilities with alpha_override
+        probs_plural_override = engine.compute_alighting_probabilities(
+            pattern_stops=pattern,
+            boarding_idx=0,
+            reverse_boardings={3: 25},
+            alpha_override=0.50,
+        )
+        for k in probs_mid:
+            assert probs_plural_override[k] == pytest.approx(probs_mid[k], abs=1e-5)
+
     def test_mode_b_reconstruction_conservation_and_terminal_clearance_randomized(self):
         """Stress-test 1000 randomized trip reconstructions across varied topologies."""
         engine = ModeBAlightingInferenceEngine()

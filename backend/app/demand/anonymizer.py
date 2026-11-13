@@ -15,15 +15,21 @@ class TransitDataAnonymizer:
 
     # Direct contact identifiers to be completely purged (never stored or exposed)
     PURGE_FIELDS: Set[str] = {
-        "phone", "mobile", "phone_number", "passenger_mobile", "passenger_phone",
+        "phone", "mobile", "phone_number", "phone_no", "passenger_mobile", "passenger_phone",
         "contact", "passenger_contact", "contact_no", "contact_number",
-        "email", "passenger_email", "passenger_name", "name", "customer_name",
-        "aadhaar", "aadhaar_no", "id_proof"
+        "customer_phone", "customer_mobile", "cell", "telephone",
+        "email", "passenger_email", "customer_email", "user_email", "mail",
+        "passenger_name", "name", "customer_name", "commuter_name", "user_name",
+        "full_name", "first_name", "last_name",
+        "aadhaar", "aadhaar_no", "aadhaar_number", "aadhar", "aadhar_no", "aadhar_number",
+        "id_proof", "national_id"
     }
 
     # Financial metadata to be purged
     FINANCIAL_FIELDS: Set[str] = {
-        "upi_id", "upi_txn_id", "upi_ref", "bank_ref_no", "bank_ref", "card_pan",
+        "upi_id", "upi_txn_id", "upi_txn", "upi_ref", "upi", "vpa",
+        "bank_ref_no", "bank_ref", "card_pan", "pan", "card_number", "card_no", "card_num",
+        "credit_card", "debit_card", "account_no", "account_number",
         "cvv", "card_cvv", "auth_code", "payment_reference"
     }
 
@@ -142,22 +148,39 @@ class TransitDataAnonymizer:
         if cols_to_drop:
             out.drop(columns=cols_to_drop, inplace=True)
 
-        # Pseudonymize card / media fields without colliding or overwriting
-        media_card_cols = {
+        # Pseudonymize personal fare media and operational device/conductor columns
+        media_priority = [
             "smartcard_id", "card_id", "ncmc_card_id", "pass_id", "pass_number", "rfid_uid"
-        }
+        ]
         for col in list(out.columns):
             col_clean = str(col).strip().lower()
             if col_clean in self.PSEUDONYMIZE_FIELDS:
-                hashed_series = out[col].astype(str).apply(self.hash_pii)
-                out[col] = hashed_series
-                if col_clean in media_card_cols and "smartcard_hash" not in out.columns:
-                    out["smartcard_hash"] = hashed_series
+                out[col] = out[col].apply(
+                    lambda v: self.hash_commuter_id(v) if pd.notna(v) and str(v).strip() and str(v).strip().lower() != "nan" else None
+                )
 
-        # Truncate timestamp columns to minute precision (vectorized)
+        # Populate or coalesce smartcard_hash without column collision
+        existing_media = [c for c in media_priority if c in out.columns]
+        if "smartcard_hash" not in out.columns and existing_media:
+            # Build unified smartcard_hash series from existing media columns in priority order
+            primary_media = existing_media[0]
+            hash_series = out[primary_media].copy()
+            for alt_media in existing_media[1:]:
+                hash_series = hash_series.combine_first(out[alt_media])
+            out["smartcard_hash"] = hash_series
+        elif "smartcard_hash" in out.columns:
+            # Hash in place if raw unhashed strings exist
+            out["smartcard_hash"] = out["smartcard_hash"].apply(
+                lambda v: self.hash_commuter_id(v) if (pd.notna(v) and str(v).strip() and len(str(v).strip()) != 64) else (v if pd.notna(v) else None)
+            )
+            # If any rows are null in smartcard_hash, coalesce from other media columns
+            for alt_media in existing_media:
+                out["smartcard_hash"] = out["smartcard_hash"].combine_first(out[alt_media])
+
+        # Truncate timestamp columns to minute precision (second=0, microsecond=0)
         time_keywords = {
-            "timestamp", "datetime", "date_time", "trans_time",
-            "boarding_time", "alighting_time"
+            "timestamp", "datetime", "date_time", "trans_time", "transaction_time",
+            "boarding_time", "alighting_time", "issue_time", "ticket_time", "time"
         }
         for col in list(out.columns):
             col_clean = str(col).strip().lower()

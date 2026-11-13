@@ -66,13 +66,43 @@ class ETMDataProfiler:
         c = str(field_name).strip().lower()
         if c in self.anonymizer.PURGE_FIELDS or c in self.anonymizer.FINANCIAL_FIELDS:
             return True
+
+        # Explicitly check for direct contact PII and financial identifiers
+        pii_tokens = {
+            "name", "passenger_name", "customer_name", "commuter_name", "user_name",
+            "full_name", "first_name", "last_name",
+            "phone", "passenger_phone", "passenger_mobile", "mobile", "contact",
+            "phone_number", "phone_no", "mobile_no", "contact_no", "contact_number",
+            "email", "passenger_email", "customer_email", "user_email", "mail",
+            "aadhaar", "aadhaar_no", "aadhaar_number", "aadhar", "aadhar_no", "uidai",
+            "card_pan", "pan", "card_number", "card_no", "card_num", "credit_card", "debit_card",
+            "cvv", "card_cvv",
+            "upi_id", "upi_txn_id", "upi_txn", "upi_ref", "upi", "vpa",
+            "bank_ref", "bank_ref_no", "account_no", "account_number"
+        }
+        if c in pii_tokens:
+            return True
+
+        # Check substring matches
         pii_substrings = [
-            "passenger_name", "passenger_phone", "passenger_mobile", "passenger_email",
-            "passenger_contact", "customer_name", "customer_phone", "customer_email",
-            "phone", "mobile", "email", "aadhaar", "upi_id", "upi_txn", "card_pan",
-            "cvv", "bank_ref", "contact_no", "contact_num"
+            "passenger_name", "customer_name", "commuter_name", "user_name",
+            "passenger_phone", "passenger_mobile", "customer_phone", "customer_mobile",
+            "passenger_email", "customer_email", "passenger_contact",
+            "phone", "mobile", "email", "aadhaar", "aadhar",
+            "upi_id", "upi_txn", "upi_ref", "card_pan", "cvv", "bank_ref",
+            "contact_no", "contact_num", "card_num", "card_number", "credit_card", "debit_card"
         ]
-        return any(sub in c for sub in pii_substrings)
+        if any(sub in c for sub in pii_substrings):
+            return True
+
+        # Standalone name or ending in _name, without capturing operational route/stop/agency/trip metadata
+        if c == "name" or (c.endswith("_name") and not any(c.startswith(p) for p in ["route", "stop", "station", "agency", "line", "trip", "zone"])):
+            return True
+
+        if c == "contact":
+            return True
+
+        return False
 
     def map_columns(self, raw_columns: List[str]) -> Dict[str, str]:
         """Maps incoming raw column names to canonical internal names using synonyms."""
@@ -394,10 +424,14 @@ class ETMDataProfiler:
             "passenger_count", "fare_paid", "fare_stage", "trip_id"
         }
         for row in clean_df.to_dict(orient="records"):
-            vendor_meta = {
-                k: v for k, v in row.items()
-                if k not in standard_cols and pd.notna(v) and not self.is_pii_or_financial_field(k)
-            }
+            vendor_meta = {}
+            for k, v in row.items():
+                if k == "vendor_metadata" and isinstance(v, dict):
+                    for mk, mv in v.items():
+                        if pd.notna(mv) and not self.is_pii_or_financial_field(mk):
+                            vendor_meta[mk] = mv
+                elif k not in standard_cols and pd.notna(v) and not self.is_pii_or_financial_field(k):
+                    vendor_meta[k] = v
             records.append(NormalizedTicketRecord(
                 ticket_id=str(row["ticket_id"]),
                 timestamp=row["timestamp"].to_pydatetime() if hasattr(row["timestamp"], "to_pydatetime") else row["timestamp"],

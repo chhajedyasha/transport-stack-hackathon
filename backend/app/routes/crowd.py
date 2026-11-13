@@ -1,0 +1,67 @@
+"""Crowd estimation and matrix querying endpoints."""
+import time
+from flask import Blueprint, request
+from app.services.ml_service import MLService
+from app.utils.envelope import api_response
+
+bp = Blueprint("crowd", __name__, url_prefix="/api")
+
+
+@bp.route("/crowd/<route_id>", methods=["GET"])
+def get_route_crowd_matrix(route_id: str):
+    """Returns 8-zone x 24-hour crowdedness matrix for heatmaps."""
+    t0 = time.time()
+    direction_id = int(request.args.get("direction", 0))
+    day_type = request.args.get("day_type", "WEEKDAY")
+    
+    ml_service = MLService.get_instance()
+    
+    matrix = []
+    for z in range(8):
+        zone_row = {"zone_id": z, "hours": []}
+        for h in range(24):
+            pred = ml_service.predict_crowd(
+                route_id=str(route_id),
+                direction_id=direction_id,
+                zone_id=z,
+                day_type=day_type,
+                hour=h,
+            )
+            zone_row["hours"].append({
+                "hour": h,
+                "load": pred["load"],
+                "rci": pred["rci"],
+                "category": pred["category"],
+            })
+        matrix.append(zone_row)
+        
+    data = {
+        "route_id": str(route_id),
+        "direction_id": direction_id,
+        "day_type": day_type,
+        "matrix": matrix,
+    }
+    return api_response(data=data, start_time=t0)
+
+
+@bp.route("/predict-crowd", methods=["POST"])
+def predict_crowd_point():
+    """Predicts crowding for a single requested cell."""
+    t0 = time.time()
+    body = request.get_json(silent=True) or {}
+    
+    route_id = str(body.get("route_id", "8UP"))
+    direction_id = int(body.get("direction_id", 0))
+    zone_id = int(body.get("zone_id", 0))
+    day_type = str(body.get("day_type", "WEEKDAY"))
+    hour = int(body.get("hour", 18))
+    
+    ml_service = MLService.get_instance()
+    pred = ml_service.predict_crowd(
+        route_id=route_id,
+        direction_id=direction_id,
+        zone_id=zone_id,
+        day_type=day_type,
+        hour=hour,
+    )
+    return api_response(data=pred, start_time=t0)

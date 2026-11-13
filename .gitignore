@@ -1,4 +1,4 @@
-﻿# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *.class
@@ -24,6 +24,7 @@ npm-debug.log*
 *.db
 data/raw/
 data/processed/
+data/staging/
 
 # Internal agent traces
 .agents/
