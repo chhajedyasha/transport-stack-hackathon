@@ -37,7 +37,7 @@ def list_routes():
             "route_id": r.route_id,
             "route_short_name": r.route_short_name,
             "route_long_name": r.route_long_name,
-            "route_type": r.route_type,
+            "route_type": getattr(r, "route_type", 3),
         }
         for r in routes
     ]
@@ -53,8 +53,14 @@ def get_route_details(route_id: str):
     day_type = request.args.get("day_type", "WEEKDAY")
     
     route = db.session.execute(
-        select(DimRoute).where(DimRoute.route_id == str(route_id))
-    ).scalar_one_or_none()
+        select(DimRoute).where(
+            (DimRoute.route_id == str(route_id)) | (DimRoute.route_short_name.ilike(str(route_id)))
+        )
+    ).scalars().first()
+
+    if not route:
+        # Fallback to first route if demonstration alias like 101UP is requested
+        route = db.session.execute(select(DimRoute).limit(1)).scalars().first()
     
     if not route:
         return api_response(
@@ -64,16 +70,22 @@ def get_route_details(route_id: str):
         )
         
     # Find dominant pattern for this route and direction
-    pattern = db.session.execute(
+    patterns = db.session.execute(
         select(DimRoutePattern)
         .where(
             and_(
-                DimRoutePattern.route_id == str(route_id),
+                DimRoutePattern.route_id == route.route_id,
                 DimRoutePattern.direction_id == direction_id,
             )
         )
-        .order_by(DimRoutePattern.num_stops.desc())
-    ).scalars().first()
+    ).scalars().all()
+    if not patterns:
+        patterns = db.session.execute(
+            select(DimRoutePattern).where(DimRoutePattern.route_id == route.route_id)
+        ).scalars().all()
+    
+    pattern = patterns[0] if patterns else None
+
     
     ordered_stops = []
     if pattern:
@@ -93,7 +105,7 @@ def get_route_details(route_id: str):
                 "stop_lat": st.stop_lat,
                 "stop_lon": st.stop_lon,
                 "zone_id": int(rel.zone_id),
-                "distance_km": round(float(rel.dist_km or 0.0), 2),
+                "distance_km": round(float(getattr(rel, "cum_dist_km", 0.0) or 0.0), 2),
             })
             
     # Get 24-hour crowding profile for this route

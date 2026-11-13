@@ -8,8 +8,9 @@ bp = Blueprint("crowd", __name__, url_prefix="/api")
 
 
 @bp.route("/crowd/<route_id>", methods=["GET"])
+@bp.route("/crowd/profile/<route_id>", methods=["GET"])
 def get_route_crowd_matrix(route_id: str):
-    """Returns 8-zone x 24-hour crowdedness matrix for heatmaps."""
+    """Returns 8-zone x 24-hour crowdedness matrix for heatmaps and profiles."""
     t0 = time.time()
     direction_id = int(request.args.get("direction", 0))
     day_type = request.args.get("day_type", "WEEKDAY")
@@ -17,8 +18,13 @@ def get_route_crowd_matrix(route_id: str):
     ml_service = MLService.get_instance()
     
     matrix = []
+    zone_profiles = []
+    hourly_loads = {h: [] for h in range(24)}
+    hourly_rcis = {h: [] for h in range(24)}
+
     for z in range(8):
         zone_row = {"zone_id": z, "hours": []}
+        z_loads = []
         for h in range(24):
             pred = ml_service.predict_crowd(
                 route_id=str(route_id),
@@ -33,13 +39,37 @@ def get_route_crowd_matrix(route_id: str):
                 "rci": pred["rci"],
                 "category": pred["category"],
             })
+            z_loads.append(pred["load"])
+            hourly_loads[h].append(pred["load"])
+            hourly_rcis[h].append(pred["rci"])
         matrix.append(zone_row)
+        z_mean = sum(z_loads) / len(z_loads) if z_loads else 0.0
+        zone_profiles.append({
+            "zone_id": z,
+            "mean_load": round(z_mean, 1),
+            "rci": min(100.0, round(z_mean * 2.0, 1)),
+            "crowd_category": "Crowded" if z_mean > 35 else "Standing Room" if z_mean > 20 else "Seats Available"
+        })
+
+    hourly_profile = []
+    for h in range(24):
+        h_mean = sum(hourly_loads[h]) / len(hourly_loads[h]) if hourly_loads[h] else 0.0
+        h_rci = sum(hourly_rcis[h]) / len(hourly_rcis[h]) if hourly_rcis[h] else 0.0
+        hourly_profile.append({
+            "hour": h,
+            "mean_load": round(h_mean, 1),
+            "max_load": round(max(hourly_loads[h]) if hourly_loads[h] else 0.0, 1),
+            "rci": round(h_rci, 1),
+            "crowd_category": "Crowded" if h_rci > 85 else "Standing Room" if h_rci >= 50 else "Seats Available"
+        })
         
     data = {
         "route_id": str(route_id),
         "direction_id": direction_id,
         "day_type": day_type,
         "matrix": matrix,
+        "zone_profiles": zone_profiles,
+        "hourly_profile": hourly_profile,
     }
     return api_response(data=data, start_time=t0)
 

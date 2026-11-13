@@ -8,14 +8,18 @@ from app.utils.envelope import api_response
 bp = Blueprint("journey", __name__, url_prefix="/api/journey")
 
 
-@bp.route("/plan", methods=["POST"])
+@bp.route("/plan", methods=["GET", "POST"])
 def plan_journey():
     """Generates direct route candidates scored by time, wait, and crowdedness."""
     t0 = time.time()
-    body = request.get_json(silent=True) or {}
+    if request.method == "POST":
+        body = request.get_json(silent=True) or {}
+    else:
+        body = request.args
     
     origin_id = body.get("origin_stop_id") or body.get("origin_id")
-    dest_id = body.get("destination_stop_id") or body.get("destination_id")
+    dest_id = body.get("destination_stop_id") or body.get("dest_id") or body.get("destination_id")
+
     
     if not origin_id or not dest_id:
         return api_response(
