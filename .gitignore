@@ -1,0 +1,29 @@
+﻿# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.class
+*.so
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.npm
+npm-debug.log*
+
+# Database & Large Data
+*.sqlite
+*.sqlite3
+*.db
+data/raw/
+data/processed/
+
+# Internal agent traces
+.agents/
