@@ -14,6 +14,9 @@ def chronological_split(
     Invariant enforced: max(train_date) < min(val_date) < min(test_date)
     """
     df = df.copy()
+    if df[date_col].isna().any():
+        df = df.dropna(subset=[date_col]).copy()
+
     df[date_col] = pd.to_datetime(df[date_col]).dt.date
     
     unique_dates = sorted(df[date_col].unique())
@@ -25,9 +28,10 @@ def chronological_split(
     n_train = max(1, int(n_dates * train_ratio))
     n_val = max(1, int(n_dates * val_ratio))
     
-    # Ensure all splits have at least 1 date
+    # Ensure all splits have at least 1 date (fixes N=3 boundary defect)
     if n_train + n_val >= n_dates:
-        n_val = max(1, n_dates - n_train - 1)
+        n_train = max(1, n_dates - 2)
+        n_val = 1
         
     train_dates = set(unique_dates[:n_train])
     val_dates = set(unique_dates[n_train : n_train + n_val])
@@ -47,3 +51,4 @@ def chronological_split(
     assert max_val < min_test, f"Leakage detected: max val date {max_val} >= min test date {min_test}"
     
     return df_train, df_val, df_test
+

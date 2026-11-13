@@ -156,3 +156,4 @@ Automated domain tests verify transport physics and model safety before deployme
 - **Category Macro-F1**: `0.8083`
 - **WAPE**: `0.2570`
 - **MAE**: `1.50` passengers
+

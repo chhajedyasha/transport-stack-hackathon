@@ -22,3 +22,4 @@ class Config:
     
     # CORS
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
+

@@ -7,51 +7,126 @@ from sklearn.base import BaseEstimator, RegressorMixin
 
 
 class HistoricalMeanRegressor(BaseEstimator, RegressorMixin):
-    """Baseline Regressor (B1 & B2).
+    """Baseline Regressor with 6-level stratified fallback hierarchy.
 
-    Uses historical route-zone-hour median/mean where available (B1),
-    falling back to network day-type hour mean (B2).
+    Hierarchy:
+    Level 0: (route_id, direction_id, zone_id, day_type, hour)
+    Level 1: (route_id, direction_id, zone_id, hour)
+    Level 2: (route_id, zone_id, hour)
+    Level 3: (route_id, hour)
+    Level 4: network (day_type, hour)
+    Level 5: global network (hour)
+    Level 6: global mean
     """
 
     def __init__(self):
+        self.route_dir_zone_dt_hour_means: Dict[tuple, float] = {}
+        self.route_dir_zone_hour_means: Dict[tuple, float] = {}
+        self.route_zone_hour_means_l2: Dict[tuple, float] = {}
+        self.route_hour_means: Dict[tuple, float] = {}
+        self.day_type_hour_means: Dict[tuple, float] = {}
+        self.global_hour_means: Dict[int, float] = {}
+        self.global_mean: float = 0.0
+        # Backward-compatible aliases
         self.route_zone_hour_means: Dict[tuple, float] = {}
         self.network_hour_means: Dict[tuple, float] = {}
-        self.global_mean: float = 0.0
 
     def fit(self, df_train: pd.DataFrame, y=None) -> "HistoricalMeanRegressor":
-        target = "mean_load"
-        self.global_mean = float(df_train[target].mean()) if len(df_train) > 0 else 10.0
+        df = df_train.copy()
+        target = "mean_load" if "mean_load" in df.columns else ("load" if "load" in df.columns else df.columns[-1])
         
-        # B1: (route_id, direction_id, zone_id, day_type, hour)
-        rzh = df_train.groupby(["route_id", "direction_id", "zone_id", "day_type", "hour"])[target].mean().to_dict()
-        self.route_zone_hour_means = {k: float(v) for k, v in rzh.items()}
-        
-        # B2: (day_type, hour)
-        nh = df_train.groupby(["day_type", "hour"])[target].mean().to_dict()
-        self.network_hour_means = {k: float(v) for k, v in nh.items()}
-        
+        # Clean target: coerce numeric and drop NaNs (equivalent to np.nanmean)
+        df[target] = pd.to_numeric(df[target], errors="coerce")
+        df = df.dropna(subset=[target]).copy()
+
+        # Map public holidays to SUNDAY baseline
+        if "day_type" in df.columns:
+            df["day_type"] = df["day_type"].replace({"HOLIDAY": "SUNDAY"})
+
+        self.global_mean = float(df[target].mean()) if len(df) > 0 else 10.0
+
+        # Level 0: (route_id, direction_id, zone_id, day_type, hour)
+        rzdth = df.groupby(["route_id", "direction_id", "zone_id", "day_type", "hour"])[target].mean().to_dict()
+        self.route_dir_zone_dt_hour_means = {k: float(v) for k, v in rzdth.items()}
+        self.route_zone_hour_means = self.route_dir_zone_dt_hour_means
+
+        # Level 1: (route_id, direction_id, zone_id, hour)
+        rdzh = df.groupby(["route_id", "direction_id", "zone_id", "hour"])[target].mean().to_dict()
+        self.route_dir_zone_hour_means = {k: float(v) for k, v in rdzh.items()}
+
+        # Level 2: (route_id, zone_id, hour)
+        rzh = df.groupby(["route_id", "zone_id", "hour"])[target].mean().to_dict()
+        self.route_zone_hour_means_l2 = {k: float(v) for k, v in rzh.items()}
+
+        # Level 3: (route_id, hour)
+        rh = df.groupby(["route_id", "hour"])[target].mean().to_dict()
+        self.route_hour_means = {k: float(v) for k, v in rh.items()}
+
+        # Level 4: (day_type, hour)
+        dth = df.groupby(["day_type", "hour"])[target].mean().to_dict()
+        self.day_type_hour_means = {k: float(v) for k, v in dth.items()}
+        self.network_hour_means = self.day_type_hour_means
+
+        # Level 5: (hour)
+        h_means = df.groupby("hour")[target].mean().to_dict()
+        self.global_hour_means = {k: float(v) for k, v in h_means.items()}
+
         return self
 
     def predict(self, df: pd.DataFrame) -> np.ndarray:
+        r_vals = df["route_id"].astype(str).values
+        d_vals = df["direction_id"].astype(int).values
+        z_vals = df["zone_id"].astype(int).values
+        dt_vals = df["day_type"].astype(str).values if "day_type" in df.columns else np.array(["WEEKDAY"] * len(df))
+        h_vals = df["hour"].astype(int).values
+
         preds = []
-        for _, row in df.iterrows():
-            r = row["route_id"]
-            d = int(row["direction_id"])
-            z = int(row["zone_id"])
-            dt = str(row.get("day_type", "WEEKDAY"))
-            h = int(row["hour"])
-            
-            key_b1 = (r, d, z, dt, h)
-            key_b2 = (dt, h)
-            
-            if key_b1 in self.route_zone_hour_means:
-                preds.append(self.route_zone_hour_means[key_b1])
-            elif key_b2 in self.network_hour_means:
-                preds.append(self.network_hour_means[key_b2])
-            else:
-                preds.append(self.global_mean)
-                
-        return np.array(preds, dtype=float)
+        for r, d, z, dt, h in zip(r_vals, d_vals, z_vals, dt_vals, h_vals):
+            preds.append(self.predict_single(r, d, z, dt, h))
+
+        return np.maximum(0.0, np.array(preds, dtype=float))
+
+    def predict_single(
+        self,
+        route_id: str,
+        direction_id: int,
+        zone_id: int,
+        day_type: str,
+        hour: int,
+    ) -> float:
+        """Evaluates single-cell prediction across complete 6-level fallback hierarchy."""
+        dt_norm = "SUNDAY" if day_type == "HOLIDAY" else str(day_type)
+        r = str(route_id)
+        d = int(direction_id)
+        z = int(zone_id)
+        h = int(hour)
+
+        # Level 0: (route, dir, zone, day_type, hour)
+        if (r, d, z, dt_norm, h) in self.route_dir_zone_dt_hour_means:
+            return max(0.0, self.route_dir_zone_dt_hour_means[(r, d, z, dt_norm, h)])
+
+        # Level 1: (route, dir, zone, hour)
+        if (r, d, z, h) in self.route_dir_zone_hour_means:
+            return max(0.0, self.route_dir_zone_hour_means[(r, d, z, h)])
+
+        # Level 2: (route, zone, hour)
+        if (r, z, h) in self.route_zone_hour_means_l2:
+            return max(0.0, self.route_zone_hour_means_l2[(r, z, h)])
+
+        # Level 3: (route, hour)
+        if (r, h) in self.route_hour_means:
+            return max(0.0, self.route_hour_means[(r, h)])
+
+        # Level 4: (day_type, hour)
+        if (dt_norm, h) in self.day_type_hour_means:
+            return max(0.0, self.day_type_hour_means[(dt_norm, h)])
+
+        # Level 5: (hour)
+        if h in self.global_hour_means:
+            return max(0.0, self.global_hour_means[h])
+
+        # Level 6: global mean
+        return max(0.0, self.global_mean)
 
 
 class CrowdRandomForestRegressor:
@@ -123,3 +198,4 @@ class CrowdRandomForestRegressor:
                 confidence.append("low")
                 
         return mean_preds, p10, p90, confidence
+

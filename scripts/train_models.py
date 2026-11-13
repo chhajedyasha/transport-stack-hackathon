@@ -57,7 +57,7 @@ def train_pipeline(
     y_test = df_test["mean_load"].values.astype(float)
     
     # 3. Fit RCI Calibrator on Train distribution
-    calibrator = RCICalibrator()
+    calibrator = RCICalibrator(rated_capacity=60.0, mode="capacity")
     calibrator.fit(y_train)
     
     # 4. Train Baselines
@@ -87,38 +87,46 @@ def train_pipeline(
         f"Category F1={test_metrics['category_macro_f1']:.4f}"
     )
     
-    # 6. Sanity Checks
+    # 6. Sanity Checks (Rigorous enforcement with strict=True)
     df_eval = df_test.copy()
     df_eval["pred_load"] = rf_test_preds
     df_eval["pred_rci"] = calibrator.compute_rci(rf_test_preds)
-    sanity_results = run_sanity_checks(df_eval)
+    sanity_results = run_sanity_checks(df_eval, strict=True)
     logger.info(f"Sanity Checks Overall Result: {sanity_results['overall']}")
     for check in sanity_results["checks"]:
         logger.info(f" - [{check['status']}] {check['name']}: {check['detail']}")
         
     # 7. Save Artifacts
     logger.info(f"Saving artifacts to {out_path}...")
-    joblib.dump(rf, out_path / "random_forest_regressor.pkl", compress=3)
-    joblib.dump(baseline, out_path / "baseline_regressor.pkl", compress=3)
-    joblib.dump(pipeline, out_path / "feature_pipeline.pkl", compress=3)
-    
-    with open(out_path / "rci_calibrator.json", "w", encoding="utf-8") as f:
-        json.dump(calibrator.to_dict(), f, indent=2)
+    save_dirs = [out_path]
+    # Ensure both models and crowdwise/models are updated if they differ
+    alt_dir = Path("crowdwise/models") if out_path == Path("models") else Path("models")
+    if alt_dir.exists() and alt_dir.resolve() != out_path.resolve():
+        save_dirs.append(alt_dir)
+
+    for target_dir in save_dirs:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        joblib.dump(rf, target_dir / "random_forest_regressor.pkl", compress=3)
+        joblib.dump(baseline, target_dir / "baseline_regressor.pkl", compress=3)
+        joblib.dump(pipeline, target_dir / "feature_pipeline.pkl", compress=3)
         
-    metadata = {
-        "version": "1.0.0",
-        "model_type": "RandomForestRegressor",
-        "dataset_rows": len(df),
-        "train_rows": len(df_train),
-        "val_rows": len(df_val),
-        "test_rows": len(df_test),
-        "val_metrics": rf_val_metrics,
-        "test_metrics": test_metrics,
-        "baseline_metrics": baseline_metrics,
-        "sanity_checks": sanity_results,
-    }
-    with open(out_path / "metadata.json", "w", encoding="utf-8") as f:
-        json.dump(metadata, f, indent=2)
+        with open(target_dir / "rci_calibrator.json", "w", encoding="utf-8") as f:
+            json.dump(calibrator.to_dict(), f, indent=2)
+            
+        metadata = {
+            "version": "1.0.0",
+            "model_type": "RandomForestRegressor",
+            "dataset_rows": len(df),
+            "train_rows": len(df_train),
+            "val_rows": len(df_val),
+            "test_rows": len(df_test),
+            "val_metrics": rf_val_metrics,
+            "test_metrics": test_metrics,
+            "baseline_metrics": baseline_metrics,
+            "sanity_checks": sanity_results,
+        }
+        with open(target_dir / "metadata.json", "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2)
         
     logger.info("Model training pipeline completed successfully!")
     return metadata

@@ -70,3 +70,4 @@ export default function CrowdBadge({ label, rci, confidence, showRci = true, siz
     </div>
   );
 }
+

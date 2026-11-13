@@ -34,3 +34,4 @@ export default function ProvenanceBadge({ tier, label, size = 'sm' }) {
     </span>
   );
 }
+

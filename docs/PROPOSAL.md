@@ -155,3 +155,4 @@ CrowdWise was engineered from day one to comply with India's **Digital Personal 
 - **Tech Stack**: Python 3.14, Flask REST API, SQLAlchemy ORM, Scikit-Learn, Pandas, React 18, Vite, Tailwind CSS, Leaflet Maps, and Recharts.
 
 CrowdWise transforms raw ticketing transactions into an actionable public good, paving the way for a more humane daily commute across Delhi.
+

@@ -1,36 +1,39 @@
 {
   "version": "1.0.0",
   "model_type": "RandomForestRegressor",
-  "dataset_rows": 95826,
-  "train_rows": 64713,
-  "val_rows": 14436,
-  "test_rows": 16677,
+  "dataset_rows": 72352,
+  "train_rows": 49096,
+  "val_rows": 10336,
+  "test_rows": 12920,
   "val_metrics": {
-    "mae": 1.8162,
-    "rmse": 2.6191,
-    "wape": 0.2013,
-    "spearman_rank_correlation": 0.9523,
-    "category_accuracy": 0.8458,
-    "category_macro_f1": 0.8455,
-    "n_samples": 14436
+    "mae": 1.518,
+    "rmse": 2.1858,
+    "wape": 0.235,
+    "wape_percent": 23.5,
+    "spearman_rank_correlation": 0.9364,
+    "category_accuracy": 0.99,
+    "category_macro_f1": 0.7745,
+    "n_samples": 10336
   },
   "test_metrics": {
-    "mae": 1.7222,
-    "rmse": 2.4924,
-    "wape": 0.21,
-    "spearman_rank_correlation": 0.9522,
-    "category_accuracy": 0.8498,
-    "category_macro_f1": 0.8459,
-    "n_samples": 16677
+    "mae": 1.5039,
+    "rmse": 2.1803,
+    "wape": 0.257,
+    "wape_percent": 25.7,
+    "spearman_rank_correlation": 0.9297,
+    "category_accuracy": 0.9931,
+    "category_macro_f1": 0.7653,
+    "n_samples": 12920
   },
   "baseline_metrics": {
-    "mae": 1.7332,
-    "rmse": 2.4979,
-    "wape": 0.1921,
-    "spearman_rank_correlation": 0.9566,
-    "category_accuracy": 0.8522,
-    "category_macro_f1": 0.8519,
-    "n_samples": 14436
+    "mae": 1.4446,
+    "rmse": 2.0689,
+    "wape": 0.2236,
+    "wape_percent": 22.36,
+    "spearman_rank_correlation": 0.9416,
+    "category_accuracy": 0.9904,
+    "category_macro_f1": 0.7833,
+    "n_samples": 10336
   },
   "sanity_checks": {
     "overall": "PASS",
@@ -39,28 +42,28 @@
         "id": "SC01_BOUNDS",
         "name": "Prediction Boundary Validity",
         "status": "PASS",
-        "detail": "Min load: 0.00, RCI range: [11.0, 99.0]",
+        "detail": "Min load: 0.00, Max load: 32.05, RCI range: [0.0, 53.4]",
         "required": true
       },
       {
         "id": "SC02_PEAK_CURVE",
-        "name": "Weekday Peak vs Midday vs Night Ordering",
+        "name": "Weekday Peak vs Midday vs Night Multipliers",
         "status": "PASS",
-        "detail": "AM Peak: 11.39, PM Peak: 12.65, Midday: 9.19, Night: 1.20",
-        "required": false
+        "detail": "AM Peak: 12.26 (ratio 1.57x), PM Peak: 10.35 (ratio 1.32x), Midday: 7.82, Night: 0.93",
+        "required": true
       },
       {
         "id": "SC03_WEEKDAY_SUNDAY",
         "name": "Weekday Peak vs Sunday Peak Contrast",
         "status": "PASS",
-        "detail": "Weekday peak: 14.48 vs Sunday peak: 10.05",
-        "required": false
+        "detail": "Weekday peak: 12.64 vs Sunday peak: 8.30",
+        "required": true
       },
       {
         "id": "SC04_DIRECTIONAL_ASYMMETRY",
         "name": "Directional Corridor Profile",
         "status": "PASS",
-        "detail": "Directional loads captured and evaluated across operating hours",
+        "detail": "Directional loads captured across operating directions: {0: 5.711904091365278, 1: 5.980039998538211}",
         "required": false
       }
     ]

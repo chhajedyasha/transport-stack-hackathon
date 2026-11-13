@@ -33,6 +33,7 @@ export async function checkHealth() {
 export async function searchStops(query, limit = 8) {
   if (!query || query.trim().length === 0) return [];
   const res = await fetchApi(`/stops/search?q=${encodeURIComponent(query)}&limit=${limit}`);
+  if (Array.isArray(res.data)) return res.data;
   return res.data?.matches || [];
 }
 
@@ -59,3 +60,4 @@ export async function getRouteCrowdProfile(routeId, dayType = 'WEEKDAY') {
 export async function getAnalyticsSummary() {
   return fetchApi('/analytics/summary');
 }
+

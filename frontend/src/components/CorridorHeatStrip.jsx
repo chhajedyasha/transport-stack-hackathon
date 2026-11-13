@@ -75,3 +75,4 @@ export default function CorridorHeatStrip({ zones, title = "8-Zone Corridor Heat
     </div>
   );
 }
+

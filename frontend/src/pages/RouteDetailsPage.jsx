@@ -296,3 +296,4 @@ export default function RouteDetailsPage() {
     </div>
   );
 }
+
