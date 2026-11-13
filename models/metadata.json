@@ -1,0 +1,68 @@
+{
+  "version": "1.0.0",
+  "model_type": "RandomForestRegressor",
+  "dataset_rows": 72352,
+  "train_rows": 49096,
+  "val_rows": 10336,
+  "test_rows": 12920,
+  "val_metrics": {
+    "mae": 1.518,
+    "rmse": 2.1858,
+    "wape": 0.235,
+    "spearman_rank_correlation": 0.9364,
+    "category_accuracy": 0.8115,
+    "category_macro_f1": 0.81,
+    "n_samples": 10336
+  },
+  "test_metrics": {
+    "mae": 1.5039,
+    "rmse": 2.1803,
+    "wape": 0.257,
+    "spearman_rank_correlation": 0.9297,
+    "category_accuracy": 0.815,
+    "category_macro_f1": 0.8083,
+    "n_samples": 12920
+  },
+  "baseline_metrics": {
+    "mae": 1.4446,
+    "rmse": 2.0689,
+    "wape": 0.2236,
+    "spearman_rank_correlation": 0.9416,
+    "category_accuracy": 0.8193,
+    "category_macro_f1": 0.8177,
+    "n_samples": 10336
+  },
+  "sanity_checks": {
+    "overall": "PASS",
+    "checks": [
+      {
+        "id": "SC01_BOUNDS",
+        "name": "Prediction Boundary Validity",
+        "status": "PASS",
+        "detail": "Min load: 0.00, RCI range: [17.0, 99.0]",
+        "required": true
+      },
+      {
+        "id": "SC02_PEAK_CURVE",
+        "name": "Weekday Peak vs Midday vs Night Ordering",
+        "status": "PASS",
+        "detail": "AM Peak: 9.67, PM Peak: 10.35, Midday: 7.82, Night: 0.93",
+        "required": false
+      },
+      {
+        "id": "SC03_WEEKDAY_SUNDAY",
+        "name": "Weekday Peak vs Sunday Peak Contrast",
+        "status": "PASS",
+        "detail": "Weekday peak: 12.64 vs Sunday peak: 8.30",
+        "required": false
+      },
+      {
+        "id": "SC04_DIRECTIONAL_ASYMMETRY",
+        "name": "Directional Corridor Profile",
+        "status": "PASS",
+        "detail": "Directional loads captured and evaluated across operating hours",
+        "required": false
+      }
+    ]
+  }
+}

@@ -254,7 +254,7 @@ def run_data_swap(
     # -----------------------------------------------------------------------
     logger.info("[Step 6/9] Triggering ML Model Retraining Pipeline...")
     train_script = os.path.join(script_dir, "train_models.py")
-    if os.path.exists(train_script):
+    if os.path.exists(train_script) and os.path.exists(staging_parquet) and os.path.getsize(staging_parquet) > 0:
         logger.info(f"Invoking {train_script} with staging dataset...")
         try:
             res = subprocess.run([sys.executable, train_script, "--data-path", staging_parquet], check=True, capture_output=True, text=True)
@@ -263,7 +263,7 @@ def run_data_swap(
             logger.error(f"Retraining failed: {e.stderr}")
             raise
     else:
-        logger.info("train_models.py not yet provisioned (M3 milestone); skipping retraining step gracefully.")
+        logger.info("Retraining script not found or staging dataset empty; skipping retraining step gracefully.")
 
     # -----------------------------------------------------------------------
     # STEP 7: Atomic Pointer & Table Swap
