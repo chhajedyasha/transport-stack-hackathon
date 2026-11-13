@@ -98,9 +98,9 @@ def train_pipeline(
         
     # 7. Save Artifacts
     logger.info(f"Saving artifacts to {out_path}...")
-    joblib.dump(rf, out_path / "random_forest_regressor.pkl")
-    joblib.dump(baseline, out_path / "baseline_regressor.pkl")
-    joblib.dump(pipeline, out_path / "feature_pipeline.pkl")
+    joblib.dump(rf, out_path / "random_forest_regressor.pkl", compress=3)
+    joblib.dump(baseline, out_path / "baseline_regressor.pkl", compress=3)
+    joblib.dump(pipeline, out_path / "feature_pipeline.pkl", compress=3)
     
     with open(out_path / "rci_calibrator.json", "w", encoding="utf-8") as f:
         json.dump(calibrator.to_dict(), f, indent=2)

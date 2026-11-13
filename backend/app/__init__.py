@@ -47,18 +47,36 @@ def create_app(config_class=Config) -> Flask:
             status_code=400,
         )
 
-    @app.errorhandler(404)
-    def not_found(e):
-        return api_response(
-            error={"code": "NOT_FOUND", "message": "The requested resource was not found."},
-            status_code=404,
-        )
-
     @app.errorhandler(500)
     def server_error(e):
         return api_response(
             error={"code": "INTERNAL_SERVER_ERROR", "message": "An internal server error occurred."},
             status_code=500,
         )
+
+    # Static frontend serving if dist/ exists
+    frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
+    if os.path.exists(frontend_dist):
+        from flask import send_from_directory, request
+
+        @app.route("/", defaults={"path": ""})
+        @app.route("/<path:path>")
+        def serve_frontend(path):
+            if path.startswith("api/"):
+                return api_response(
+                    error={"code": "NOT_FOUND", "message": f"Endpoint /{path} not found."},
+                    status_code=404,
+                )
+            if path and os.path.exists(os.path.join(frontend_dist, path)):
+                return send_from_directory(frontend_dist, path)
+            return send_from_directory(frontend_dist, "index.html")
+    else:
+        @app.errorhandler(404)
+        def not_found(e):
+            return api_response(
+                error={"code": "NOT_FOUND", "message": "The requested resource was not found."},
+                status_code=404,
+            )
+
 
     return app
