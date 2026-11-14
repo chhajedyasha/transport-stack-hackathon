@@ -181,7 +181,8 @@ class CrowdRandomForestRegressor:
         
         spread = p90 - p10
         # Coefficient of variation or relative spread
-        rel_spread = np.where(mean_preds > 0.1, spread / mean_preds, spread)
+        safe_denom = np.maximum(0.1, mean_preds)
+        rel_spread = np.where(mean_preds > 0.1, spread / safe_denom, spread)
         
         confidence = []
         for i in range(len(mean_preds)):
