@@ -5,7 +5,7 @@ Supports SQLite (development/demo) with foreign key PRAGMA and PostgreSQL (produ
 from typing import List, Optional
 from sqlalchemy import (
     String, Integer, Float, Boolean, Text, ForeignKey, Index,
-    event, create_engine, Engine
+    event, create_engine, Engine, text
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 
@@ -245,10 +245,23 @@ def get_session_factory(engine: Engine):
 
 
 def create_all_tables(engine: Engine) -> None:
-    """Creates all 6 compact derived tables in the target database."""
+    """Creates all compact derived tables in the target database."""
     Base.metadata.create_all(bind=engine)
 
 
 def drop_all_tables(engine: Engine) -> None:
-    """Drops all tables from target database."""
-    Base.metadata.drop_all(bind=engine)
+    """Drops all tables and indices cleanly from target database."""
+    try:
+        with engine.begin() as conn:
+            if "sqlite" in str(engine.url):
+                tables = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table';")).scalars().all()
+                for t in tables:
+                    if t != "sqlite_sequence":
+                        conn.execute(text(f'DROP TABLE IF EXISTS "{t}";'))
+                indices = conn.execute(text("SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_autoindex%';")).scalars().all()
+                for idx in indices:
+                    conn.execute(text(f'DROP INDEX IF EXISTS "{idx}";'))
+            else:
+                Base.metadata.drop_all(bind=engine)
+    except Exception:
+        Base.metadata.drop_all(bind=engine)

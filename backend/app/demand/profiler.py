@@ -362,10 +362,17 @@ class ETMDataProfiler:
                 fallback_times = canonical_df.loc[failed_mask, "timestamp"].apply(self.parse_timestamp)
                 parsed_series = parsed_series.combine_first(fallback_times)
 
-        now_utc = datetime.now(timezone.utc) + timedelta(minutes=5)
+        if hasattr(parsed_series, "dt") and parsed_series.dt.tz is not None:
+            sample_str = str(canonical_df["timestamp"].dropna().iloc[0]) if not canonical_df["timestamp"].dropna().empty else ""
+            if "+" in sample_str or "Z" in sample_str:
+                parsed_series = parsed_series.dt.tz_convert("Asia/Kolkata").dt.tz_localize(None)
+            else:
+                parsed_series = parsed_series.dt.tz_localize(None)
+
+        now_limit = pd.Timestamp.now() + pd.Timedelta(minutes=5)
         valid_mask = (
             parsed_series.notna()
-            & (parsed_series <= now_utc)
+            & (parsed_series <= now_limit)
             & canonical_df["route_id"].notna()
             & (canonical_df["route_id"].astype(str).str.strip() != "")
         )

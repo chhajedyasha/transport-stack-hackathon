@@ -182,12 +182,31 @@ class DemandReconstructionPipeline:
             rows = session.execute(stmt).all()
             return [(int(r[0]), str(r[1]), int(r[2]), float(r[3]), str(r[4] or "")) for r in rows]
 
-    def get_route_pattern_map(self) -> Dict[Tuple[str, int], str]:
-        """Maps (route_id, direction_id) to the primary pattern_id."""
-        stmt = select(DimRoutePattern.route_id, DimRoutePattern.direction_id, DimRoutePattern.pattern_id)
+    def get_route_pattern_map(self) -> Dict[Any, str]:
+        """Maps (route_id, direction_id) and route_short_name to the primary pattern_id."""
+        stmt = (
+            select(
+                DimRoutePattern.route_id,
+                DimRoutePattern.direction_id,
+                DimRoutePattern.pattern_id,
+                DimRoute.route_short_name,
+            )
+            .outerjoin(DimRoute, DimRoutePattern.route_id == DimRoute.route_id)
+        )
         with Session(self.engine) as session:
             rows = session.execute(stmt).all()
-            return {(str(r[0]), int(r[1])): str(r[2]) for r in rows}
+            mapping: Dict[Any, str] = {}
+            for r_id, d_id, p_id, s_name in rows:
+                r_id_str = str(r_id)
+                d_id_int = int(d_id)
+                p_id_str = str(p_id)
+                mapping[(r_id_str, d_id_int)] = p_id_str
+                mapping[r_id_str] = p_id_str
+                if s_name:
+                    s_str = str(s_name).strip().upper()
+                    mapping[(s_str, d_id_int)] = p_id_str
+                    mapping[s_str] = p_id_str
+            return mapping
 
     def get_reverse_boardings_distribution(
         self,
@@ -208,7 +227,7 @@ class DemandReconstructionPipeline:
 
         rev_stop_ids = {s[1]: s[0] for s in rev_stops}
         rev_boardings: Dict[int, int] = {}
-        for fwd_seq, stop_id, _, _ in pattern_stops:
+        for fwd_seq, stop_id, *rest in pattern_stops:
             if stop_id in rev_stop_ids:
                 rev_boardings[fwd_seq] = 10  # default baseline symmetry
             else:
@@ -282,7 +301,15 @@ class DemandReconstructionPipeline:
                 continue
 
             if detected_mode == "mode_a":
-                tickets = grp.to_dict(orient="records")
+                b_col = "boarding_stop_id" if "boarding_stop_id" in grp.columns else ("start_stop_name" if "start_stop_name" in grp.columns else "origin")
+                a_col = "alighting_stop_id" if "alighting_stop_id" in grp.columns else ("end_stop_name" if "end_stop_name" in grp.columns else "destination")
+                p_col = "passenger_count" if "passenger_count" in grp.columns else "passengers"
+                if b_col in grp.columns and a_col in grp.columns:
+                    od_pairs = grp.groupby([b_col, a_col])[p_col].sum().reset_index()
+                    od_pairs.rename(columns={b_col: "boarding_stop_id", a_col: "alighting_stop_id", p_col: "passenger_count"}, inplace=True)
+                    tickets = od_pairs.to_dict(orient="records")
+                else:
+                    tickets = grp.to_dict(orient="records")
                 recon = self.mode_a_reconstructor.reconstruct_trip(pat_stops, tickets)
             else:
                 stop_seq_map = {s[1]: s[0] for s in pat_stops}

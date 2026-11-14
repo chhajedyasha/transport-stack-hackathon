@@ -67,17 +67,25 @@ class ModeAReconstructor:
                 if toks:
                     token_to_seq.append((toks, stop_seq))
 
+        resolved_cache: Dict[str, Optional[int]] = {}
+
         def _resolve_stop(val: Any) -> Optional[int]:
             if val is None:
                 return None
             val_str = str(val).strip()
+            if val_str in resolved_cache:
+                return resolved_cache[val_str]
             if val_str in stop_id_to_seq:
+                resolved_cache[val_str] = stop_id_to_seq[val_str]
                 return stop_id_to_seq[val_str]
             val_lower = val_str.lower()
             if val_lower in stop_id_to_seq:
+                resolved_cache[val_str] = stop_id_to_seq[val_lower]
                 return stop_id_to_seq[val_lower]
             if val_str.isdigit() and int(val_str) < n:
-                return int(val_str)
+                res = int(val_str)
+                resolved_cache[val_str] = res
+                return res
             val_toks = _clean_tokens(val_str)
             if val_toks:
                 best_seq = None
@@ -88,7 +96,9 @@ class ModeAReconstructor:
                         best_overlap = overlap
                         best_seq = seq
                 if best_overlap > 0:
+                    resolved_cache[val_str] = best_seq
                     return best_seq
+            resolved_cache[val_str] = None
             return None
 
         # 1. Accumulate OD Matrix
