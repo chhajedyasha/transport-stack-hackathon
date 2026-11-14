@@ -68,9 +68,9 @@ def train_pipeline(
     baseline_metrics = evaluate_predictions(y_val, baseline_val_preds, calibrator)
     logger.info(f"Baseline Validation WAPE: {baseline_metrics['wape']:.4f}, MAE: {baseline_metrics['mae']:.2f}")
     
-    # 5. Train Random Forest Regressor
+    # 5. Train Random Forest Regressor (45 estimators for optimal GitHub size < 50MB and fast inference)
     logger.info("Training Production RandomForestRegressor...")
-    rf = CrowdRandomForestRegressor(n_estimators=100, max_depth=16, random_state=42)
+    rf = CrowdRandomForestRegressor(n_estimators=45, max_depth=15, random_state=42)
     rf.fit(X_train, y_train)
     
     rf_val_preds = rf.predict(X_val)

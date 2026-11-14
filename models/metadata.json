@@ -1,62 +1,62 @@
 {
   "version": "1.0.0",
   "model_type": "RandomForestRegressor",
-  "dataset_rows": 519584,
-  "train_rows": 350393,
-  "val_rows": 87879,
-  "test_rows": 81312,
+  "dataset_rows": 3322312,
+  "train_rows": 2218664,
+  "val_rows": 431232,
+  "test_rows": 672416,
   "val_metrics": {
-    "mae": 13.5611,
-    "rmse": 33.7178,
-    "wape": 1.3452,
-    "wape_percent": 134.52,
-    "spearman_rank_correlation": 0.5743,
-    "category_accuracy": 0.814,
-    "category_macro_f1": 0.4485,
-    "n_samples": 87879
+    "mae": 1.3196,
+    "rmse": 2.3178,
+    "wape": 0.581,
+    "wape_percent": 58.1,
+    "spearman_rank_correlation": 0.6522,
+    "category_accuracy": 0.9947,
+    "category_macro_f1": 0.6886,
+    "n_samples": 431232
   },
   "test_metrics": {
-    "mae": 16.9943,
-    "rmse": 49.688,
-    "wape": 0.9053,
-    "wape_percent": 90.53,
-    "spearman_rank_correlation": 0.5901,
-    "category_accuracy": 0.7969,
-    "category_macro_f1": 0.4745,
-    "n_samples": 81312
+    "mae": 1.3788,
+    "rmse": 2.4621,
+    "wape": 0.5546,
+    "wape_percent": 55.46,
+    "spearman_rank_correlation": 0.6879,
+    "category_accuracy": 0.993,
+    "category_macro_f1": 0.6787,
+    "n_samples": 672416
   },
   "baseline_metrics": {
-    "mae": 18.0576,
-    "rmse": 51.2906,
-    "wape": 1.7913,
-    "wape_percent": 179.13,
-    "spearman_rank_correlation": 0.5633,
-    "category_accuracy": 0.7965,
-    "category_macro_f1": 0.3771,
-    "n_samples": 87879
+    "mae": 1.2985,
+    "rmse": 2.2571,
+    "wape": 0.5717,
+    "wape_percent": 57.17,
+    "spearman_rank_correlation": 0.655,
+    "category_accuracy": 0.9949,
+    "category_macro_f1": 0.6971,
+    "n_samples": 431232
   },
   "sanity_checks": {
-    "overall": "FAIL",
+    "overall": "PASS",
     "checks": [
       {
         "id": "SC01_BOUNDS",
         "name": "Prediction Boundary Validity",
         "status": "PASS",
-        "detail": "Min load: 0.00, Max load: 247.44, RCI range: [0.0, 100.0]",
+        "detail": "Min load: 0.00, Max load: 108.18, RCI range: [0.0, 100.0]",
         "required": true
       },
       {
         "id": "SC02_PEAK_CURVE",
         "name": "Weekday Peak vs Midday vs Night Multipliers",
-        "status": "FAIL",
-        "detail": "AM Peak: 10.88 (ratio 0.91x), PM Peak: 11.21 (ratio 0.94x), Midday: 11.92, Night: 17.29",
+        "status": "PASS",
+        "detail": "AM Peak: 3.64 (ratio 2.47x), PM Peak: 2.71 (ratio 1.84x), Midday: 1.47, Night: 1.27",
         "required": true
       },
       {
         "id": "SC04_DIRECTIONAL_ASYMMETRY",
         "name": "Directional Corridor Profile",
         "status": "PASS",
-        "detail": "Directional loads captured across operating directions: {0: 12.77261396807529, 1: 13.706259455330779}",
+        "detail": "Directional loads captured across operating directions: {0: 2.2419421141089835, 1: 2.454383121799921}",
         "required": false
       }
     ]
