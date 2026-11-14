@@ -10,11 +10,11 @@ export default function ProvenanceBadge({ tier, label, size = 'sm' }) {
       case 'simulated':
         return 'bg-amber-50 text-amber-800 border-amber-300';
       case 'organizer':
-        return 'bg-blue-50 text-blue-800 border-blue-300';
+        return 'bg-navy/10 text-navy border-navy/30';
       case 'estimated':
       case 'ml':
       default:
-        return 'bg-purple-50 text-purple-800 border-purple-300';
+        return 'bg-teal/10 text-teal border-teal/30';
     }
   };
 

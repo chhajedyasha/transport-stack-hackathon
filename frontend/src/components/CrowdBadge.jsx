@@ -59,8 +59,8 @@ export default function CrowdBadge({ label, rci, confidence, showRci = true, siz
             confidence === 'high'
               ? 'bg-emerald-100 text-emerald-800'
               : confidence === 'medium'
-              ? 'bg-sky-100 text-sky-800'
-              : 'bg-slate-100 text-slate-600'
+              ? 'bg-teal/10 text-teal'
+              : 'bg-transit-bg text-transit-textMuted'
           }`}
           title={`Estimation Confidence: ${confidence}`}
         >
