@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrowdWise Technical Note: Mathematical Formulations & Architecture</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --secondary: #2563eb;
+      --text: #1e293b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      line-height: 1.6;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 48px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: var(--primary);
+      font-size: 2.1rem;
+      margin-top: 0;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    h2 {
+      color: var(--primary);
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 6px;
+      margin-top: 36px;
+    }
+    h3 {
+      color: #334155;
+      margin-top: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    code, pre {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+    }
+    code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #0284c7;
+    }
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    .math-block {
+      background: #f8fafc;
+      border-left: 4px solid var(--secondary);
+      padding: 12px 18px;
+      margin: 16px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .container { box-shadow: none; padding: 0; max-width: 100%; }
+      table, pre, .math-block { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CrowdWise Technical Note: Mathematical Formulations &amp; Architecture</h1>
+    <div class="subtitle">Transport Stack Hackathon 2026 — Track 2: Passenger Demand &amp; Crowdedness Modeling</div>
+
+    <h2>1. Demand Reconstruction Mathematics</h2>
+    <h3>1.1 Physical Mass Conservation Recurrence</h3>
+    <p>A fundamental axiom of transit demand modeling is that ticket sales represent point events, not instantaneous vehicle occupancy. To determine the passenger load $L_s$ onboard a bus operating along a stop sequence $s \in \{0, 1, \dots, N-1\}$:</p>
+    
+    <div class="math-block">
+      $$L_s = L_{s-1} + b_s - a_s \quad \forall s \in \{1, \dots, N-1\}$$
+    </div>
+
+    <p>Subject to physical boundary invariants:</p>
+    <ol>
+      <li><strong>Initial Boundary Condition:</strong> $L_0 = b_0$ (passenger load begins at the first stop's boardings).</li>
+      <li><strong>Terminal Boundary Clearance:</strong> $L_{N-1} = 0$ (all passengers must alight at terminal).</li>
+      <li><strong>Physical Non-Negativity Invariant:</strong> $L_s \ge 0 \quad \forall s$.</li>
+    </ol>
+
+    <h3>1.2 Tri-Modal Ingestion Pipeline (Modes A, B, and C)</h3>
+    <h4>Mode A: Full Origin-Destination Pairs (October Delhi Dataset)</h4>
+    <p>When both <code>start_stop_name</code> and <code>end_stop_name</code> are recorded in the ETM transaction record:</p>
+    <div class="math-block">
+      $$b_s = \sum_{k} \mathbb{I}(\text{origin}_k = s) \cdot \text{passenger\_count}_k$$
+      $$a_s = \sum_{k} \mathbb{I}(\text{destination}_k = s) \cdot \text{passenger\_count}_k$$
+    </div>
+
+    <h4>Mode B: Boarding-Only Inference (Hybrid Alighting Model)</h4>
+    <p>When only boarding stop $i$ is recorded, alighting probabilities $P(j \mid i)$ for downstream stops $j > i$ are estimated via convex combination:</p>
+    <div class="math-block">
+      $$P(j \mid i) = \alpha \cdot P_{\text{rev}}(j \mid i) + (1 - \alpha) \cdot P_{\text{grav}}(j \mid i)$$
+    </div>
+
+    <h4>Mode C: Daily Aggregate Disaggregation (Hare-Niemeyer Algorithm)</h4>
+    <p>When only daily aggregate boardings $D_r$ are available, integer conservation is guaranteed by the largest remainder method:</p>
+    <div class="math-block">
+      $$\text{Quota}_t = D_r \times \frac{w_t}{\sum_{k=1}^M w_k}, \quad A_t = \lfloor \text{Quota}_t \rfloor, \quad R_t = \text{Quota}_t - A_t$$
+    </div>
+
+    <h3>1.3 Unrecorded Passenger Inflation (Pink Pass Multiplier)</h3>
+    <p>To account for uncounted female commuters traveling with zero-fare Pink Passes:</p>
+    <div class="math-block">
+      $$b'_s = \gamma_r \times b_s, \quad \gamma_r \in [1.20, 1.45]$$
+    </div>
+
+    <h2>2. Spatial Graph &amp; 8-Zone Corridor Partition</h2>
+    <p>Each route pattern's stop sequence $s \in \{0, \dots, N-1\}$ is mapped into an 8-zone corridor representation:</p>
+    <div class="math-block">
+      $$z = \min\left(7, \left\lfloor \frac{8 \times s}{N} \right\rfloor\right) \in \{0, 1, 2, 3, 4, 5, 6, 7\}$$
+    </div>
+
+    <h2>3. Machine Learning Architecture &amp; Confidence Estimation</h2>
+    <h3>3.1 Feature Pipeline</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Features</th>
+          <th>Formulation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Cyclical Calendar</strong></td>
+          <td><code>hour_sin</code>, <code>hour_cos</code></td>
+          <td>$\sin(2\pi \cdot h / 24), \cos(2\pi \cdot h / 24)$</td>
+        </tr>
+        <tr>
+          <td><strong>Operating Day</strong></td>
+          <td><code>is_weekend</code>, <code>day_of_week</code></td>
+          <td>Binary flag for Weekend vs Weekday</td>
+        </tr>
+        <tr>
+          <td><strong>Corridor Spatial</strong></td>
+          <td><code>zone_id</code>, <code>zone_id_norm</code></td>
+          <td>Integer $z \in [0, 7]$ and normalized $z / 7.0$</td>
+        </tr>
+        <tr>
+          <td><strong>Transit Supply</strong></td>
+          <td><code>num_stops</code>, <code>total_dist_km</code>, <code>headway_min</code></td>
+          <td>Extracted directly from GTFS timetable</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 Confidence Spread Metric</h3>
+    <div class="math-block">
+      $$\text{Relative Spread} = \frac{p_{90} - p_{10}}{\max(\hat{y}, 0.1)}$$
+    </div>
+    <ul>
+      <li><strong>High Confidence:</strong> Relative Spread &lt; 0.35 and historical observations ≥ 10.</li>
+      <li><strong>Medium Confidence:</strong> 0.35 ≤ Relative Spread &lt; 0.75.</li>
+      <li><strong>Low Confidence:</strong> Relative Spread ≥ 0.75 or zero historical observations.</li>
+    </ul>
+
+    <h2>4. Multi-Objective Journey Scoring</h2>
+    <div class="math-block">
+      $$\text{Score} = w_{\text{time}} \cdot \frac{T - T_{\min}}{\max(1.0, T_{\max} - T_{\min})} + w_{\text{crowd}} \cdot \frac{\text{RCI}}{100.0}$$
+    </div>
+    <p>Subject to the Detour Safeguard constraint: $T \le 1.5 \times T_{\text{fastest}} + 10\text{ min}$.</p>
+  </div>
+</body>
+</html>
