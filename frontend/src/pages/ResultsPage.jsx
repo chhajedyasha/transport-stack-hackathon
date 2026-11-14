@@ -201,13 +201,26 @@ export default function ResultsPage() {
             </div>
 
             {/* Right Map Canvas filling rest */}
-            <div className="lg:col-span-7 sticky top-20">
+            <div className="lg:col-span-7 sticky top-20 space-y-2">
+              <div className="bg-white border border-transit-border rounded-panel px-3 py-2 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold bg-navy text-white px-2 py-0.5 rounded text-[11px]">
+                    {selectedOption?.route_short_name || selectedOption?.route_id || 'Route'}
+                  </span>
+                  <span className="font-semibold text-navy">
+                    {lang === 'hi' ? 'रूट कॉरिडोर व स्टॉप ट्रैक' : 'Route Corridor & Track'}
+                  </span>
+                </div>
+                <div className="text-[11px] text-transit-textMuted">
+                  {selectedOption?.stops?.length ? `${selectedOption.stops.length} ${lang === 'hi' ? 'स्टॉप' : 'stops'}` : ''}
+                </div>
+              </div>
               <LeafletRouteMap
                 stops={selectedOption?.stops || []}
                 shapePoints={selectedOption?.shape_points || []}
                 highlightOrigin={originId}
                 highlightDest={destId}
-                height="560px"
+                height="520px"
               />
             </div>
           </div>
@@ -215,13 +228,26 @@ export default function ResultsPage() {
           {/* MOBILE LAYOUT (< 1024px) */}
           <div className="lg:hidden relative">
             {/* Map at ~35% height */}
-            <div className="mb-3">
+            <div className="mb-3 space-y-1.5">
+              <div className="bg-white border border-transit-border rounded-panel px-2.5 py-1.5 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-bold bg-navy text-white px-1.5 py-0.5 rounded text-[10px]">
+                    {selectedOption?.route_short_name || selectedOption?.route_id || 'Route'}
+                  </span>
+                  <span className="font-semibold text-navy text-[11px]">
+                    {lang === 'hi' ? 'रूट कॉरिडोर ट्रैक' : 'Route Track'}
+                  </span>
+                </div>
+                <div className="text-[10px] text-transit-textMuted font-medium">
+                  {selectedOption?.stops?.length ? `${selectedOption.stops.length} stops` : ''}
+                </div>
+              </div>
               <LeafletRouteMap
                 stops={selectedOption?.stops || []}
                 shapePoints={selectedOption?.shape_points || []}
                 highlightOrigin={originId}
                 highlightDest={destId}
-                height="280px"
+                height="260px"
               />
             </div>
 
