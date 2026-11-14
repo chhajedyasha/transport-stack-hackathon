@@ -91,10 +91,10 @@ export default function PlannerPage() {
 
   // Quick fill showcase route
   const handleQuickFillShowcase = () => {
-    setOriginQuery('Anand Vihar ISBT');
-    setOriginStop({ stop_id: 'ST_TMS_01', stop_name: 'Anand Vihar ISBT' });
-    setDestQuery('Connaught Place (Super Bazar)');
-    setDestStop({ stop_id: 'ST_102_12', stop_name: 'Connaught Place (Super Bazar)' });
+    setOriginQuery('Anand Vihar ISBT Terminal');
+    setOriginStop({ stop_id: '8256', stop_name: 'Anand Vihar ISBT Terminal' });
+    setDestQuery('Shivaji Stadium Terminal ( Connaught Place )');
+    setDestStop({ stop_id: '365', stop_name: 'Shivaji Stadium Terminal ( Connaught Place )' });
     setDepartureTime('18:00');
     setPreference('balanced');
   };
