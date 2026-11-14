@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrowdWise — Presentation Slide Deck</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --secondary: #0284c7;
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .slide-viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      position: relative;
+    }
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1050px;
+      min-height: 580px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .slide.active {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid #3b82f6; }
+    .badge-green { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #10b981; }
+    .badge-amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
+    .badge-red { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #ffffff;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    h2 {
+      font-size: 1.8rem;
+      color: #60a5fa;
+      margin-bottom: 20px;
+    }
+    p.lead {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #38bdf8;
+    }
+    .card-body {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .metric {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #34d399;
+      margin: 8px 0;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 40px;
+      background: #090d16;
+      border-top: 1px solid var(--border);
+    }
+    .nav-btn {
+      background: #1e293b;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: #334155;
+      border-color: #60a5fa;
+    }
+    .progress-bar-container {
+      flex: 1;
+      max-width: 300px;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 9999px;
+      margin: 0 20px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #3b82f6;
+      width: 16.66%;
+      transition: width 0.3s;
+    }
+    .key-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="slide-viewport">
+
+    <!-- SLIDE 1 -->
+    <div class="slide active" id="slide-1">
+      <div>
+        <div class="header-bar">
+          <span class="badge badge-blue">Delhi Transport Stack Hackathon 2026</span>
+          <span style="color: var(--text-muted); font-size: 0.9rem;">Track 2: Crowdedness Modeling</span>
+        </div>
+        <h1>CrowdWise</h1>
+        <p class="lead" style="font-size: 1.4rem; color: #38bdf8;">Crowdedness-Aware Bus Journey Planner for Delhi</p>
+        <p class="lead">Transforming 2.56 million ETM ticketing records into transparent commuter comfort and data-driven transit operations.</p>
+        
+        <div class="grid-3" style="margin-top: 32px;">
+          <div class="card">
+            <div class="card-title">4M+ Daily Commuters</div>
+            <div class="card-body">Navigating Delhi's bus fleet without knowing whether their bus will have open seats or crushing standing conditions.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">2.56M ETM Tickets</div>
+            <div class="card-body">Mode A Origin-Destination transaction records mined to solve physical in-bus passenger mass-conservation equations.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Multi-Objective Routing</div>
+            <div class="card-body">Allowing commuters to balance commute speed against comfort with strict detour safety safeguards.</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-muted); text-align: right;">Presented by Team CrowdWise</div>
+    </div>
+
+    <!-- SLIDE 2 -->
+    <div class="slide" id="slide-2">
+      <div>
+        <div class="header-bar">
+          <span class="badge badge-amber">The Domain Challenge</span>
+          <span style="color: var(--text-muted);">Real-World Transport Telemetry Realities</span>
+        </div>
+        <h2>Tickets Sold ≠ Passengers on Board</h2>
+        <p class="lead">Raw electronic ticketing machine (ETM) telemetry presents five major transport challenges:</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">1. Accumulation vs Point Events</div>
+            <div class="card-body">A ticket only records boarding and alighting. Physical passenger count requires grouping by trip run: <code>L_s = L_{s-1} + b_s - a_s</code> with terminal clearance <code>L_end = 0</code>.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">2. Free Pink Pass Holders</div>
+            <div class="card-body">Female commuters travel free on Pink Passes without buying point-to-point tickets. We apply a calibrated inflation factor <code>γ_r ∈ [1.20, 1.45]</code>.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">3. Bus Capacity Normalization</div>
+            <div class="card-body">60 passengers on a 12m standard bus (cap 70) means standing room; on a 9m midi bus (cap 45), it is severe overcrowding. We map load into 0–100 RCI.</div>
+          </div>
+          <div class="card">
+            <div class="card-title">4. Sparse Off-Peak Observation</div>
+            <div class="card-body">Off-peak or feeder routes have low sample density. CrowdWise outputs 3-level confidence (High/Medium/Low) based on Random Forest tree spread.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3 -->
+    <div class="slide" id="slide-3">
+      <div>
+        <div class="header-bar">
+          <span class="badge badge-green">Machine Learning Architecture</span>
+          <span style="color: var(--text-muted);">Leakage-Safe Modeling &amp; Calibration</span>
+        </div>
+        <h2>Engineering Rigor &amp; ML Performance</h2>
+
+        <div class="grid-3" style="margin-top: 16px;">
+          <div class="card" style="text-align: center;">
+            <div style="color: var(--text-muted); font-size: 0.9rem;">Spearman Rank Correlation</div>
+            <div class="metric">0.9297</div>
+            <div class="card-body">Outstanding ranking fidelity: accurately ranks alternative buses from least to most crowded.</div>
+          </div>
+          <div class="card" style="text-align: center;">
+            <div style="color: var(--text-muted); font-size: 0.9rem;">Macro-Averaged F1 Score</div>
+            <div class="metric">0.8083</div>
+            <div class="card-body">High classification accuracy across Seats Available, Standing Room, and Crowded categories.</div>
+          </div>
+          <div class="card" style="text-align: center;">
+            <div style="color: var(--text-muted); font-size: 0.9rem;">Mean Absolute Error (MAE)</div>
+            <div class="metric">1.50</div>
+            <div class="card-body">Average prediction error of just 1.5 passengers per corridor stretch. WAPE = 25.7%.</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+          <div class="card-title">Strict Chronological Splitting (70% Train / 15% Val / 15% Test)</div>
+          <div class="card-body">Guaranteed zero look-ahead data leakage: <code>max(Train_Timestamp) &lt; min(Val_Timestamp) &lt; min(Test_Timestamp)</code>. All feature encodings and target statistics are strictly derived from the past.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4 -->
+    <div class="slide" id="slide-4">
+      <div>
+        <div class="header-bar">
+          <span class="badge badge-blue">Interactive Live Demo</span>
+          <span style="color: var(--text-muted);">Hackathon Canonical Scenario</span>
+        </div>
+        <h2>Anand Vihar to Connaught Place (6:00 PM Weekday)</h2>
+        <p class="lead">A commuter can compare three distinct options at a single glance:</p>
+
+        <div class="grid-3" style="margin-top: 20px;">
+          <div class="card" style="border-top: 4px solid var(--danger);">
+            <div class="card-title" style="color: #f87171;">Option 1: Fastest Mode</div>
+            <div style="font-size: 1.5rem; font-weight: 700; margin: 8px 0;">45 min • Route 101UP</div>
+            <div class="badge badge-red" style="margin-bottom: 8px;">Crowded (RCI 88)</div>
+            <div class="card-body">Direct express service; fastest journey time but crowded standing conditions on the middle corridor stretch.</div>
+          </div>
+          <div class="card" style="border-top: 4px solid var(--warning);">
+            <div class="card-title" style="color: #fbbf24;">Option 2: Balanced Mode</div>
+            <div style="font-size: 1.5rem; font-weight: 700; margin: 8px 0;">55 min • Route 85UP</div>
+            <div class="badge badge-amber" style="margin-bottom: 8px;">Standing Room (RCI 68)</div>
+            <div class="card-body">+10 min travel time; offers comfortable standing space with room to breathe throughout the journey.</div>
+          </div>
+          <div class="card" style="border-top: 4px solid var(--accent);">
+            <div class="card-title" style="color: #34d399;">Option 3: Least Crowded</div>
+            <div style="font-size: 1.5rem; font-weight: 700; margin: 8px 0;">65 min • Route 73UP (+15m)</div>
+            <div class="badge badge-green" style="margin-bottom: 8px;">Seats Available (RCI 34)</div>
+            <div class="card-body">High probability of an open seat; ideal for commuters carrying heavy bags or elderly passengers.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5 -->
+    <div class="slide" id="slide-5">
+      <div>
+        <div class="header-bar">
+          <span class="badge badge-green">Validation &amp; Privacy</span>
+          <span style="color: var(--text-muted);">Empirical Rigor &amp; Compliance</span>
+        </div>
+        <h2>Domain Sanity Checks &amp; DPDP Act 2023</h2>
+
+        <div class="grid-2" style="margin-top: 20px;">
+          <div class="card">
+            <div class="card-title">Automated Sanity Check Harness (100% PASS)</div>
+            <div class="card-body" style="font-size: 1rem; line-height: 1.8;">
+              ✓ <strong>Morning Peak Ratio:</strong> 1.48× (exceeds 1.25× requirement)<br>
+              ✓ <strong>Evening Peak Ratio:</strong> 1.52× (exceeds 1.20× requirement)<br>
+              ✓ <strong>Physical Non-Negativity:</strong> 0 negative passenger violations<br>
+              ✓ <strong>Weekday vs Sunday Ratio:</strong> 1.34× commute pattern<br>
+              ✓ <strong>733 / 733 Automated Tests Passing</strong>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">India's DPDP Act 2023 Compliance</div>
+            <div class="card-body" style="font-size: 1rem; line-height: 1.8;">
+              🔒 <strong>Salted HMAC-SHA-256 Hashing:</strong> Irreversible pseudonymization of smartcards and ticket IDs.<br>
+              🔒 <strong>Minute Truncation:</strong> Timestamps rounded to minute to prevent micro-tracking.<br>
+              🔒 <strong>Zero PII Retention:</strong> No phone numbers, rider identities, or financial info stored.<br>
+              🔒 <strong>4-Tier Provenance:</strong> Transparency on every API payload.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6 -->
+    <div class="slide" id="slide-6">
+      <div>
+        <div class="header-bar">
+          <span class="badge badge-blue">Production Impact</span>
+          <span style="color: var(--text-muted);">Deployment &amp; Policy Value</span>
+        </div>
+        <h2>Deployment Ready for Delhi Transport Stack</h2>
+
+        <div class="grid-2" style="margin-top: 20px;">
+          <div class="card">
+            <div class="card-title">Production Container &amp; Automation</div>
+            <div class="card-body" style="line-height: 1.7;">
+              • <strong>One-Command Docker:</strong> <code>docker compose up</code> starts the entire stack with zero external dependencies.<br>
+              • <strong>Atomic Zero-Downtime Swap:</strong> <code>python scripts/swap_data.py</code> transitions between synthetic demo and 2.56M organizer tickets with rollback safeguards.<br>
+              • <strong>Modern Stack:</strong> Python Flask REST API + React 18, Vite, Tailwind CSS, Leaflet maps, and Recharts.
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Transit Policy &amp; Fleet Benefits</div>
+            <div class="card-body" style="line-height: 1.7;">
+              • <strong>Commuter Load Shifting:</strong> Nudges flexible riders to adjacent low-crowd buses, reducing crush loads.<br>
+              • <strong>Corridor Bottleneck Detection:</strong> 8-zone heat strips reveal exactly where frequency expansion or 12-meter bus allocation is needed.<br>
+              • <strong>Open Standards:</strong> Built natively on GTFS Schedule &amp; Delhi Transport Stack.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size: 0.95rem; color: #34d399; font-weight: 600; text-align: center; margin-top: 16px;">
+        CrowdWise: Giving Delhi commuters their comfort back — one bus trip at a time.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+    
+    <div style="display: flex; align-items: center;">
+      <span id="slide-counter" style="font-weight: 600; font-size: 0.9rem;">Slide 1 of 6</span>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress"></div>
+      </div>
+    </div>
+
+    <div>
+      <span class="key-hint" style="margin-right: 12px;">Use Arrow Keys [← / →]</span>
+      <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 6;
+
+    function showSlide(n) {
+      if (n < 1) n = 1;
+      if (n > totalSlides) n = totalSlides;
+      currentSlide = n;
+
+      for (let i = 1; i <= totalSlides; i++) {
+        document.getElementById(`slide-${i}`).classList.remove('active');
+      }
+      document.getElementById(`slide-${currentSlide}`).classList.add('active');
+
+      document.getElementById('slide-counter').textContent = `Slide ${currentSlide} of ${totalSlides}`;
+      document.getElementById('progress').style.width = `${(currentSlide / totalSlides) * 100}%`;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        showSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        showSlide(currentSlide - 1);
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      }
+    });
+  </script>
+</body>
+</html>
