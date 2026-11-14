@@ -2,7 +2,9 @@
 **Delhi Transport Stack Hackathon 2026 — Track 2: Passenger Demand & Crowdedness Modeling**  
 *A bus journey planner for Delhi that displays expected bus crowdedness alongside scheduled travel times, allowing commuters to choose between the fastest, balanced, or least-crowded transit routes.*
 
-[![Smoke Tests](https://img.shields.io/badge/Smoke%20Tests-9%2F9%20PASS-brightgreen.svg)]()
+[![Smoke Tests](https://img.shields.io/badge/Smoke%20Tests-14%2F14%20PASS-brightgreen.svg)]()
+[![Regression Tests](https://img.shields.io/badge/Pytest-732%2F732%20PASS-brightgreen.svg)]()
+[![Full-Stack Verification](https://img.shields.io/badge/Full--Stack%20E2E-10%2F10%20PASS-brightgreen.svg)]()
 [![Domain Checks](https://img.shields.io/badge/Sanity%20Checks-100%25%20PASS-brightgreen.svg)]()
 [![ML Metric](https://img.shields.io/badge/Spearman%20Rank-0.6879-blue.svg)]()
 [![DPDP Act](https://img.shields.io/badge/DPDP%20Act%202023-Compliant-emerald.svg)]()
@@ -105,13 +107,15 @@ python scripts/bootstrap.py
 ### 2. Run Smoke Tests & Verification
 ```bash
 python scripts/smoke_test.py
+python scripts/verify_full_website.py
 ```
-*Output: `SUCCESS: ALL 9 SMOKE TESTS PASSED! System integration 100% verified.`*
+*Output: `SUCCESS: ALL 14 SMOKE TESTS PASSED! System integration 100% verified.`*
+*Output: `ALL 10 FULL-STACK VERIFICATION CHECKS PASSED WITH ZERO ERRORS!`*
 
 ### 3. Start the Application
-**Option A: Unified Full-Stack Server (Flask serves compiled React app)**
+**Option A: Unified Full-Stack WSGI Server (Flask serves compiled React app)**
 ```bash
-python backend/run.py
+python wsgi.py
 ```
 Open **[http://localhost:5000](http://localhost:5000)** in your browser!
 
@@ -185,8 +189,10 @@ All responses follow the standard JSON envelope: `{"ok": true, "data": ..., "err
 - [Detailed Submission Proposal](docs/PROPOSAL.md) — 2-page challenge proposal addressing real-world edge cases.
 - [Technical Architecture Note](docs/TECHNICAL_NOTE.md) — Mathematical formulations, ML architecture, and sanity checks.
 - [Video Demo Script & Presentation Deck](docs/DEMO_SCRIPT.md) — 3-minute video walkthrough script and 6-slide deck outline.
-- [Design System & UI Tokens](docs/DESIGN.md) — Color-blind safe tokens and UX specifications.
-- [Owner Checklist](docs/MANUAL_TODO.md) — Video recording instructions for submission.
+- [Civic UX & Design System](docs/DESIGN_SYSTEM.md) — Color-blind safe tokens, high-contrast palette, and daylight typography.
+- [User Experience Specification](docs/UX_SPEC.md) — Commuter personas, states matrix, and plain language rules.
+- [Quality Assurance & Prompt B Audit](docs/QA_REPORT.md) — Automated scans, bundle metrics, and usability walkthrough.
+- [Owner Submission Checklist](docs/MANUAL_TODO.md) — Final video recording & portal submission instructions.
 
 ---
 
