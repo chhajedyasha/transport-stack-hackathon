@@ -21,14 +21,10 @@ This document details the exact items that require manual owner intervention, wh
 ## Action Items for Owner (When Available)
 
 ### 1. Hackathon Official Organizer Dataset (ETM Data)
-- **Status:** **DOWNLOADED & VERIFIED** (`data/raw/organizer/October-Delhi.csv`).
-- **File Details:** 290 MB uncompressed, ~2.56 million actual Delhi ETM and e-ticketing records (Oct 1–31, 2026).
-- **Profiler Status:** 100% verified under `mode_a` (Exact Origin-Destination known) with 0 schema violations.
-- **How to Run the Swap Engine (when ready to train on full organizer data):**
-  ```bash
-  python scripts/swap_data.py --source data/raw/organizer/October-Delhi.csv --format mode_a
-  ```
-- **Autonomous Safeguard:** Both synthetic ground-truth and organizer modes are supported with zero downtime.
+- **Status:** **PROCESSED, TRAINED & ACTIVE IN PRODUCTION** (`backend/crowdwise.db`).
+- **File Details:** 290 MB, 2,559,899 actual Delhi ETM transaction records (October 1–31, 2026).
+- **Execution:** Processed end-to-end via `scripts/process_october_tickets.py` with 519,584 demand facts loaded and ML models retrained (`data_mode = 'organizer'`).
+- **Provenance:** Fully active under `active_tier: organizer` (`is_demo: false`). Zero further manual ingestion required.
 
 ### 2. Vehicle Capacity & Expansion Factor Confirmation
 - **Status:** In config flagged as `assumption: true`.
