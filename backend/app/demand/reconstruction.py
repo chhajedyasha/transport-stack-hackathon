@@ -36,45 +36,72 @@ class ModeAReconstructor:
                 "od_matrix": np.zeros((0, 0)),
             }
 
+        import re
+
+        def _clean_tokens(s: str) -> set:
+            s = s.lower().replace("s.j.", "safdarjung").replace("sj ", "safdarjung ").strip()
+            s = re.sub(r'\b(terminal|metro station|crossing|bus stand|stand|dtc|\(t\)|flats|dda flats|village|more|road|rd)\b', '', s)
+            return set(re.findall(r'[a-z0-9]+', s))
+
+        token_to_seq: List[Tuple[set, int]] = []
         stop_id_to_seq: Dict[str, int] = {}
         for idx, s in enumerate(pattern_stops):
             if isinstance(s, (tuple, list)):
                 stop_seq = int(s[0])
                 stop_id = str(s[1])
+                stop_name = str(s[4]) if len(s) > 4 else ""
             elif isinstance(s, dict):
                 stop_seq = int(s.get("stop_sequence", s.get("seq", idx)))
                 stop_id = str(s.get("stop_id", f"S_{idx}"))
+                stop_name = str(s.get("stop_name", ""))
             else:
                 stop_seq = int(getattr(s, "stop_sequence", getattr(s, "seq", idx)))
                 stop_id = str(getattr(s, "stop_id", f"S_{idx}"))
+                stop_name = str(getattr(s, "stop_name", ""))
             stop_id_to_seq[stop_id] = stop_seq
             stop_id_to_seq[str(stop_seq)] = stop_seq
+            if stop_name:
+                stop_id_to_seq[stop_name.strip()] = stop_seq
+                stop_id_to_seq[stop_name.lower().strip()] = stop_seq
+                toks = _clean_tokens(stop_name)
+                if toks:
+                    token_to_seq.append((toks, stop_seq))
+
+        def _resolve_stop(val: Any) -> Optional[int]:
+            if val is None:
+                return None
+            val_str = str(val).strip()
+            if val_str in stop_id_to_seq:
+                return stop_id_to_seq[val_str]
+            val_lower = val_str.lower()
+            if val_lower in stop_id_to_seq:
+                return stop_id_to_seq[val_lower]
+            if val_str.isdigit() and int(val_str) < n:
+                return int(val_str)
+            val_toks = _clean_tokens(val_str)
+            if val_toks:
+                best_seq = None
+                best_overlap = 0
+                for toks, seq in token_to_seq:
+                    overlap = len(val_toks & toks)
+                    if overlap > best_overlap:
+                        best_overlap = overlap
+                        best_seq = seq
+                if best_overlap > 0:
+                    return best_seq
+            return None
 
         # 1. Accumulate OD Matrix
         od_matrix = np.zeros((n, n), dtype=np.float64)
         total_tickets = len(tickets)
         matched_tickets = 0
         for t in tickets:
-            origin = t.get("boarding_stop_id") or t.get("origin") or t.get("origin_seq") or t.get("from_stop_id")
-            dest = t.get("alighting_stop_id") or t.get("dest") or t.get("destination") or t.get("dest_seq") or t.get("to_stop_id")
+            origin = t.get("boarding_stop_id") or t.get("origin") or t.get("origin_seq") or t.get("from_stop_id") or t.get("start_stop_name")
+            dest = t.get("alighting_stop_id") or t.get("dest") or t.get("destination") or t.get("dest_seq") or t.get("to_stop_id") or t.get("end_stop_name")
             count = float(t.get("passenger_count", t.get("passengers", t.get("count", 1))))
 
-            i: Optional[int] = None
-            j: Optional[int] = None
-
-            if origin is not None:
-                orig_str = str(origin)
-                if orig_str in stop_id_to_seq:
-                    i = stop_id_to_seq[orig_str]
-                elif orig_str.isdigit() and int(orig_str) < n:
-                    i = int(orig_str)
-
-            if dest is not None:
-                dest_str = str(dest)
-                if dest_str in stop_id_to_seq:
-                    j = stop_id_to_seq[dest_str]
-                elif dest_str.isdigit() and int(dest_str) < n:
-                    j = int(dest_str)
+            i = _resolve_stop(origin)
+            j = _resolve_stop(dest)
 
             if i is not None and j is not None and 0 <= i < n and 0 <= j < n:
                 matched_tickets += 1

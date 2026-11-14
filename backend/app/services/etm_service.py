@@ -42,6 +42,7 @@ from app.models.transit import (
     DimRoutePattern,
     RelPatternStop,
     DimTripStart,
+    DimStop,
 )
 
 logger = logging.getLogger("crowdwise.etm_service")
@@ -148,7 +149,7 @@ class DemandReconstructionPipeline:
 
     def __init__(self, db_url_or_engine: Optional[Union[str, Any]] = None):
         if db_url_or_engine is None:
-            backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
             default_path = os.path.join(backend_dir, "crowdwise.db").replace("\\", "/")
             url = os.environ.get("CROWDWISE_DB_URL", f"sqlite:///{default_path}")
             self.engine = create_engine(url)
@@ -163,21 +164,23 @@ class DemandReconstructionPipeline:
         self.mode_c_disaggregator = ModeCDisaggregator()
         self.zone_aggregator = ZoneDemandAggregator()
 
-    def get_pattern_stops(self, pattern_id: str) -> List[Tuple[int, str, int, float]]:
-        """Retrieves ordered (seq, stop_id, zone_id, cum_dist_km) for a pattern."""
+    def get_pattern_stops(self, pattern_id: str) -> List[Tuple[int, str, int, float, str]]:
+        """Retrieves ordered (seq, stop_id, zone_id, cum_dist_km, stop_name) for a pattern."""
         stmt = (
             select(
                 RelPatternStop.stop_sequence,
                 RelPatternStop.stop_id,
                 RelPatternStop.zone_id,
                 RelPatternStop.cum_dist_km,
+                DimStop.stop_name,
             )
+            .outerjoin(DimStop, RelPatternStop.stop_id == DimStop.stop_id)
             .where(RelPatternStop.pattern_id == pattern_id)
             .order_by(RelPatternStop.stop_sequence)
         )
         with Session(self.engine) as session:
             rows = session.execute(stmt).all()
-            return [(int(r[0]), str(r[1]), int(r[2]), float(r[3])) for r in rows]
+            return [(int(r[0]), str(r[1]), int(r[2]), float(r[3]), str(r[4] or "")) for r in rows]
 
     def get_route_pattern_map(self) -> Dict[Tuple[str, int], str]:
         """Maps (route_id, direction_id) to the primary pattern_id."""
@@ -239,22 +242,36 @@ class DemandReconstructionPipeline:
         trip_zone_records: List[Dict[str, Any]] = []
 
 
-        # Group by trip if available, or by (route_id, direction_id, day_type, hour, date)
+        # Group by trip if available, or by (route_id, direction_id, day_type, trip_date, hour)
+        if "trip_date" not in df_records.columns:
+            if "timestamp" in df_records.columns:
+                df_records["trip_date"] = pd.to_datetime(df_records["timestamp"]).dt.strftime("%Y-%m-%d")
+            else:
+                df_records["trip_date"] = "2026-10-15"
+
         has_trip = "trip_id" in df_records.columns and df_records["trip_id"].notna().any()
-        group_cols = ["trip_id", "route_id", "direction_id", "day_type", "hour"] if has_trip else ["route_id", "direction_id", "day_type", "hour"]
+        group_cols = ["trip_id", "route_id", "direction_id", "day_type", "trip_date", "hour"] if has_trip else ["route_id", "direction_id", "day_type", "trip_date", "hour"]
 
         # Cache pattern stops and reverse boardings across trips
-        cached_pat_stops: Dict[str, List[Tuple[int, str, int, float]]] = {}
+        cached_pat_stops: Dict[str, List[Tuple[int, str, int, float, str]]] = {}
         cached_rev_boardings: Dict[Tuple[str, int], Dict[int, int]] = {}
 
         for grp_keys, grp in df_records.groupby(group_cols):
             if has_trip:
-                t_id, r_id, d_id, dt, hr = grp_keys
+                t_id, r_id, d_id, dt, trip_date, hr = grp_keys
             else:
-                r_id, d_id, dt, hr = grp_keys
-                t_id = f"SYN_{r_id}_{d_id}_{dt}_{hr}"
+                r_id, d_id, dt, trip_date, hr = grp_keys
+                t_id = f"SYN_{r_id}_{d_id}_{dt}_{trip_date}_{hr}"
 
-            pat_id = pattern_map.get((r_id, d_id))
+            base_r_id = str(r_id).replace("UP", "").replace("DOWN", "").replace("DN", "").strip()
+            if "UP" in str(r_id):
+                eff_dir = 1
+            elif "DOWN" in str(r_id) or "DN" in str(r_id):
+                eff_dir = 0
+            else:
+                eff_dir = int(d_id)
+
+            pat_id = pattern_map.get((base_r_id, eff_dir)) or pattern_map.get((r_id, d_id)) or pattern_map.get((base_r_id, d_id))
             if not pat_id:
                 continue
 
@@ -263,9 +280,6 @@ class DemandReconstructionPipeline:
             pat_stops = cached_pat_stops[pat_id]
             if not pat_stops:
                 continue
-
-            first_dt = grp["timestamp"].iloc[0]
-            trip_date = first_dt.strftime("%Y-%m-%d") if isinstance(first_dt, datetime) else str(first_dt)[:10]
 
             if detected_mode == "mode_a":
                 tickets = grp.to_dict(orient="records")
@@ -281,9 +295,9 @@ class DemandReconstructionPipeline:
                     if seq is not None:
                         boardings_by_seq[seq] += int(cnt)
 
-                cache_key = (r_id, d_id)
+                cache_key = (base_r_id, eff_dir)
                 if cache_key not in cached_rev_boardings:
-                    cached_rev_boardings[cache_key] = self.get_reverse_boardings_distribution(r_id, d_id, pat_stops)
+                    cached_rev_boardings[cache_key] = self.get_reverse_boardings_distribution(base_r_id, eff_dir, pat_stops)
                 rev_boardings = cached_rev_boardings[cache_key]
 
                 recon = self.alighting_engine.reconstruct_trip(
@@ -293,10 +307,9 @@ class DemandReconstructionPipeline:
                 )
 
             zones = self.zone_aggregator.aggregate_trip_zones(
-
                 trip_id=str(t_id),
-                route_id=str(r_id),
-                direction_id=int(d_id),
+                route_id=base_r_id,
+                direction_id=int(eff_dir),
                 day_type=str(dt),
                 trip_date=trip_date,
                 hour=int(hr),

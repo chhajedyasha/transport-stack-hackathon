@@ -196,7 +196,9 @@ def run_data_swap(
                 smartcard_hash VARCHAR(64)
             );
         """))
-    staging_df.to_sql("etm_staging_tickets", con=engine, if_exists="append", index=False, chunksize=10000)
+    staging_sample = staging_df.head(50000) if len(staging_df) > 50000 else staging_df
+    staging_sample.to_sql("etm_staging_tickets", con=engine, if_exists="append", index=False, chunksize=5000)
+    logger.info(f"Staged {len(staging_sample)} audit ticket samples into etm_staging_tickets.")
 
     # -----------------------------------------------------------------------
     # STEP 4: Demand Reconstruction & Alighting Inference
