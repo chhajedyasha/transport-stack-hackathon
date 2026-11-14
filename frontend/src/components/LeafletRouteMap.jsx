@@ -75,7 +75,7 @@ export default function LeafletRouteMap({
   return (
     <div
       style={{ height }}
-      className={`w-full rounded-panel overflow-hidden border border-transit-border relative bg-transit-bg flex flex-col ${className}`}
+      className={`w-full rounded-2xl overflow-hidden border border-border shadow-sm relative bg-transit-bg flex flex-col ${className}`}
     >
       <div className="flex-1 w-full relative">
         <MapContainer
@@ -91,16 +91,16 @@ export default function LeafletRouteMap({
 
           {bounds.length > 0 && <ChangeView bounds={bounds} />}
 
-          {/* Selected bus route track: 6px navy casing + 3.5px teal line */}
+          {/* Selected bus route track: 7px navy casing + 4.5px energetic teal line */}
           {polylineCoords.length > 1 && (
             <>
               <Polyline
                 positions={polylineCoords}
-                pathOptions={{ color: '#142B3B', weight: 6, opacity: 0.9, lineJoin: 'round' }}
+                pathOptions={{ color: '#142B3B', weight: 7, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }}
               />
               <Polyline
                 positions={polylineCoords}
-                pathOptions={{ color: '#147D78', weight: 3.5, opacity: 1, lineJoin: 'round' }}
+                pathOptions={{ color: '#008A87', weight: 4.5, opacity: 1, lineJoin: 'round', lineCap: 'round' }}
               />
             </>
           )}
@@ -116,21 +116,21 @@ export default function LeafletRouteMap({
             const isDest =
               String(highlightDest) === String(stop.stop_id) || idx === stops.length - 1;
 
-            let radius = 4;
+            let radius = 4.5;
             let color = '#142B3B'; // navy stroke
             let fillColor = '#FFFFFF'; // white center
-            let weight = 2;
+            let weight = 2.5;
 
             if (isOrigin) {
-              radius = 7;
-              color = '#142B3B';
-              fillColor = '#147D78'; // Teal for origin
-              weight = 2.5;
+              radius = 8.5;
+              color = '#FFFFFF';
+              fillColor = '#008A87'; // Teal for origin
+              weight = 3;
             } else if (isDest) {
-              radius = 7;
-              color = '#142B3B';
+              radius = 8.5;
+              color = '#FFFFFF';
               fillColor = '#142B3B'; // Navy for destination
-              weight = 2.5;
+              weight = 3;
             }
 
             return (

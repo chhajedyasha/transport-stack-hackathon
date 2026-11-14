@@ -117,12 +117,12 @@ export default function CompareTable({
   ];
 
   return (
-    <div className={`border border-border rounded-[var(--radius-panel)] bg-surface overflow-hidden ${className}`}>
-      <div className="p-3 bg-surface-bg border-b border-border flex items-center justify-between">
+    <div className={`border border-border rounded-2xl bg-white shadow-sm overflow-hidden ${className}`}>
+      <div className="p-3.5 bg-[#F8F5F2] border-b border-border flex items-center justify-between">
         <h4 className="text-xs font-bold text-navy uppercase tracking-wider">
           {lang === 'hi' ? 'शीर्ष 3 विकल्पों की तुलना' : 'Compare Top 3 Options'}
         </h4>
-        <span className="text-[11px] text-tx-muted">
+        <span className="text-[11px] text-tx-muted font-medium">
           {topOptions.length} {lang === 'hi' ? 'विकल्प' : 'options'}
         </span>
       </div>
@@ -130,8 +130,8 @@ export default function CompareTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="border-b border-border bg-surface">
-              <th className="py-2.5 px-3 font-semibold text-tx-muted sticky left-0 bg-surface z-10 min-w-[110px] sm:min-w-[130px] border-r border-border/50">
+            <tr className="border-b border-border bg-white">
+              <th className="py-2.5 px-3 font-semibold text-tx-muted sticky left-0 bg-white z-10 min-w-[110px] sm:min-w-[130px] border-r border-border/50">
                 {lang === 'hi' ? 'मापदंड' : 'Metric'}
               </th>
               {topOptions.map((opt, idx) => {
@@ -148,19 +148,19 @@ export default function CompareTable({
                       isSelected ? 'bg-teal/10 font-bold text-teal' : 'hover:bg-surface-bg text-navy'
                     }`}
                   >
-                    <div className="flex flex-col items-center gap-1">
+                    <div className="flex flex-col items-center gap-1.5">
                       {isFastest && (
-                        <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-[2px] bg-navy text-white leading-none">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-navy text-white leading-none">
                           {lang === 'hi' ? 'सबसे तेज़' : 'Fastest'}
                         </span>
                       )}
                       {isLeastCrowded && (
-                        <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-[2px] bg-teal text-white leading-none">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal text-white leading-none">
                           {lang === 'hi' ? 'कम भीड़' : 'Least crowded'}
                         </span>
                       )}
                       <RouteBadge routeNumber={routeNum} size="sm" />
-                      <span className="text-[11px] block text-tx-muted font-normal">
+                      <span className="text-[11px] block text-tx-muted font-medium">
                         Option {idx + 1}
                       </span>
                     </div>

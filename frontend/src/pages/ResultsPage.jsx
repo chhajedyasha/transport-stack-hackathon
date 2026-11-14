@@ -85,6 +85,15 @@ export default function ResultsPage() {
   const selectedOption = options[selectedOptionIndex] || options[0];
   const fastestOption = planData?.fastest_baseline || options[0];
 
+  const displayOrigin =
+    originName && !/^\d+$/.test(originName)
+      ? originName
+      : selectedOption?.origin_stop?.name || originName;
+  const displayDest =
+    destName && !/^\d+$/.test(destName)
+      ? destName
+      : selectedOption?.destination_stop?.name || destName;
+
   const handlePreferenceChange = (newPref) => {
     setPreference(newPref);
     const newParams = new URLSearchParams(location.search);
@@ -95,25 +104,25 @@ export default function ResultsPage() {
   return (
     <div className="py-4 space-y-4">
       {/* Top Breadcrumb & Route Summary Bar */}
-      <div className="bg-white border border-transit-border rounded-panel p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border border-border rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="p-2 rounded-[4px] border border-transit-border bg-transit-bg hover:bg-white text-navy transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+            className="w-10 h-10 rounded-full border border-border bg-white hover:bg-teal-tint hover:border-teal text-navy transition-all flex items-center justify-center shrink-0 shadow-xs"
             title={lang === 'hi' ? 'खोज बदलें' : 'Edit search'}
             aria-label="Back to planner"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-5 h-5 text-navy" />
           </Link>
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-xs font-bold text-navy truncate">
-              <span className="truncate">{originName}</span>
-              <ArrowRight className="w-3.5 h-3.5 text-teal shrink-0" />
-              <span className="truncate">{destName}</span>
+            <div className="flex items-center gap-2 text-sm sm:text-base font-extrabold text-navy truncate">
+              <span className="truncate">{displayOrigin}</span>
+              <ArrowRight className="w-4 h-4 text-teal shrink-0" />
+              <span className="truncate">{displayDest}</span>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-transit-textMuted mt-0.5">
-              <Clock className="w-3 h-3" />
-              <span>
+            <div className="flex items-center gap-2 text-xs text-tx-muted mt-0.5">
+              <Clock className="w-3.5 h-3.5 text-teal shrink-0" />
+              <span className="font-medium">
                 {lang === 'hi' ? `प्रस्थान ~${departureTime}` : `Departs ~${departureTime}`}
               </span>
               <span>·</span>
@@ -127,13 +136,13 @@ export default function ResultsPage() {
           <button
             type="button"
             onClick={() => setShowCompare(!showCompare)}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-[4px] border transition-colors min-h-[38px] ${
+            className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full border transition-all ${
               showCompare
-                ? 'bg-navy text-white border-navy'
-                : 'bg-white text-navy border-transit-border hover:bg-transit-bg'
+                ? 'bg-navy text-white border-navy shadow-sm'
+                : 'bg-white text-navy border-border hover:border-teal hover:bg-teal-tint'
             }`}
           >
-            <TableIcon className="w-3.5 h-3.5" />
+            <TableIcon className="w-4 h-4 text-teal" />
             <span>{showCompare ? t('results.closeCompare') : t('results.compare')}</span>
           </button>
         </div>
@@ -207,17 +216,17 @@ export default function ResultsPage() {
             </div>
 
             {/* Right Map Canvas & Detailed Stop-by-Step Itinerary below map */}
-            <div className="lg:col-span-7 space-y-3">
-              <div className="bg-white border border-transit-border rounded-panel px-3 py-2 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold bg-navy text-white px-2 py-0.5 rounded text-[11px]">
+            <div className="lg:col-span-7 space-y-4">
+              <div className="bg-white border border-border rounded-2xl px-4 py-3 shadow-sm flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2.5">
+                  <span className="font-mono font-bold bg-navy text-white px-2.5 py-1 rounded-full text-xs">
                     {selectedOption?.route_short_name || selectedOption?.route_id || 'Route'}
                   </span>
-                  <span className="font-semibold text-navy">
+                  <span className="font-bold text-navy text-sm">
                     {lang === 'hi' ? 'रूट कॉरिडोर व स्टॉप ट्रैक' : 'Route Corridor & Track'}
                   </span>
                 </div>
-                <div className="text-[11px] text-transit-textMuted font-medium">
+                <div className="text-xs text-tx-muted font-semibold">
                   {selectedOption?.stops?.length ? `${selectedOption.stops.length} ${lang === 'hi' ? 'स्टॉप' : 'stops'} · ${selectedOption.distance_km || 13.4} km` : ''}
                 </div>
               </div>
@@ -227,7 +236,7 @@ export default function ResultsPage() {
                 highlightOrigin={originId}
                 highlightDest={destId}
                 distanceKm={selectedOption?.distance_km}
-                height="380px"
+                height="400px"
               />
 
               {/* Detailed Step-by-Step Stop Timeline and Arrival Times below the map */}

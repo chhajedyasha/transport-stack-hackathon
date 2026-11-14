@@ -11,7 +11,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 targets = [
     ("planner", "http://localhost:3000/"),
     ("results", "http://localhost:3000/results?origin_id=8256&dest_id=365&departure_time=18:00&preference=balanced"),
-    ("route", "http://localhost:3000/route/101UP"),
+    ("route", "http://localhost:3000/route/73UP"),
     ("analytics", "http://localhost:3000/analytics"),
     ("about", "http://localhost:3000/about"),
 ]
@@ -34,12 +34,13 @@ for name, url in targets:
             "--hide-scrollbars",
             f"--user-data-dir={temp_profile}",
             f"--window-size={w},{h}",
+            "--virtual-time-budget=3000",
             f"--screenshot={out_file}",
             url
         ]
         print(f"Capturing {name}_{vp_name} ({w}x{h})...", flush=True)
         try:
-            subprocess.run(cmd, capture_output=True, timeout=10)
+            subprocess.run(cmd, capture_output=True, timeout=25)
             if os.path.exists(out_file) and os.path.getsize(out_file) > 1000:
                 print(f" -> Saved {name}_{vp_name}.png ({os.path.getsize(out_file)} bytes)", flush=True)
         except Exception as e:

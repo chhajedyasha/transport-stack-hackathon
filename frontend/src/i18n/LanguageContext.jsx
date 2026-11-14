@@ -52,7 +52,7 @@ export function LanguageProvider({ children }) {
     if (typeof val === 'string') {
       let res = val;
       for (const [pk, pv] of Object.entries(params)) {
-        res = res.replace(new RegExp(`\\{${pk}\\}`, 'g'), String(pv));
+        res = res.replace(new RegExp(`\\{\\{${pk}\\}\\}|\\{${pk}\\}`, 'g'), String(pv));
       }
       return res;
     }

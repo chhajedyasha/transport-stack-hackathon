@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* 4-Figure Single Summary Strip divided by hairlines */}
-      <div className="bg-white border border-transit-border rounded-panel overflow-hidden">
+      <div className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden">
         <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-transit-borderSubtle">
           <div className="p-3.5 sm:p-4 text-center sm:text-left">
             <span className="text-[11px] font-semibold text-transit-textMuted uppercase tracking-wider block">
@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Question 1: When is the network busiest? */}
-      <section className="bg-white border border-transit-border rounded-panel p-4 sm:p-5 space-y-3">
+      <section className="bg-white border border-border rounded-2xl shadow-sm p-4 sm:p-5 space-y-3">
         <div>
           <h2 className="text-sm sm:text-base font-bold text-navy">
             {lang === 'hi' ? 'नेटवर्क सबसे अधिक व्यस्त कब होता है?' : 'When is the network busiest?'}
@@ -218,7 +218,7 @@ export default function AnalyticsPage() {
       </section>
 
       {/* Question 2: Which routes are most crowded at peak? */}
-      <section className="bg-white border border-transit-border rounded-panel p-4 sm:p-5 space-y-3">
+      <section className="bg-white border border-border rounded-2xl shadow-sm p-4 sm:p-5 space-y-3">
         <div>
           <h2 className="text-sm sm:text-base font-bold text-navy">
             {lang === 'hi' ? 'पीक समय में कौन से रूट सबसे अधिक भरे होते हैं?' : 'Which routes are most crowded at peak?'}
@@ -283,7 +283,7 @@ export default function AnalyticsPage() {
       </section>
 
       {/* Question 3: How are crowd levels distributed? */}
-      <section className="bg-white border border-transit-border rounded-panel p-4 sm:p-5 space-y-3">
+      <section className="bg-white border border-border rounded-2xl shadow-sm p-4 sm:p-5 space-y-3">
         <div>
           <h2 className="text-sm sm:text-base font-bold text-navy">
             {lang === 'hi' ? 'नेटवर्क में भीड़ का वितरण कैसा है?' : 'How are crowd levels distributed?'}

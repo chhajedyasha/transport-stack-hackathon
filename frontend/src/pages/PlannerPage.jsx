@@ -142,10 +142,10 @@ export default function PlannerPage() {
     <div className="py-4 sm:py-8 max-w-xl mx-auto">
       {/* Tool Header */}
       <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-navy tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-black text-navy tracking-tight">
           {t('planner.title')}
         </h1>
-        <p className="text-xs text-transit-textMuted mt-1">
+        <p className="text-xs sm:text-sm text-tx-muted mt-1 font-medium">
           {t('app.historicalNote')}
         </p>
       </div>
@@ -153,12 +153,12 @@ export default function PlannerPage() {
       {/* Main Tool Form */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white border border-transit-border rounded-panel p-4 sm:p-5 space-y-4"
+        className="bg-white border border-border rounded-2xl p-6 sm:p-8 shadow-card space-y-5"
       >
         {formError && (
           <div
             role="alert"
-            className="p-3 bg-crowd-highBg border border-crowd-highBorder rounded-[4px] text-xs text-crowd-high flex items-center gap-2"
+            className="p-3 bg-crowd-highBg border border-crowd-highBorder rounded-xl text-xs font-semibold text-crowd-high flex items-center gap-2"
           >
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{formError}</span>
@@ -194,15 +194,15 @@ export default function PlannerPage() {
             />
           </div>
 
-          {/* Swap Button (Centered between inputs) */}
-          <div className="flex justify-end -my-1 pr-2">
+          {/* Swap Button (Floating Centered Pill) */}
+          <div className="flex items-center justify-center -my-2 relative z-10">
             <button
               type="button"
               onClick={handleSwap}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-transit-textMuted hover:text-navy hover:bg-transit-bg border border-transit-border rounded-[4px] transition-colors min-h-[36px]"
+              className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold text-navy bg-white hover:bg-teal-tint hover:border-teal hover:text-teal border border-border rounded-full shadow-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
               aria-label={t('planner.swap')}
             >
-              <ArrowDownUp className="w-3.5 h-3.5" />
+              <ArrowDownUp className="w-3.5 h-3.5 text-teal" />
               <span>{t('planner.swap')}</span>
             </button>
           </div>
@@ -235,6 +235,40 @@ export default function PlannerPage() {
           </div>
         </div>
 
+        {/* Quick Hub Suggestions for easy one-tap selection */}
+        <div className="pt-1">
+          <span className="text-[11px] font-bold text-tx-muted uppercase tracking-wider block mb-1.5">
+            {lang === 'hi' ? 'सुझाए गए प्रमुख टर्मिनल' : 'Suggested Transit Hubs'}
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { name: 'Anand Vihar ISBT', id: '8256' },
+              { name: 'Connaught Place', id: '365' },
+              { name: 'Kashmere Gate', id: '1025' },
+              { name: 'AIIMS Delhi', id: '2829' },
+              { name: 'Dhaula Kuan', id: '3102' },
+              { name: 'Nehru Place', id: '2559' },
+            ].map((hub) => (
+              <button
+                key={hub.id}
+                type="button"
+                onClick={() => {
+                  if (!originStop) {
+                    setOriginStop({ stop_id: hub.id, stop_name: hub.name });
+                    setOriginQuery(hub.name);
+                  } else {
+                    setDestStop({ stop_id: hub.id, stop_name: hub.name });
+                    setDestQuery(hub.name);
+                  }
+                }}
+                className="px-3 py-1 text-xs font-semibold rounded-full bg-[#F3ECE8] hover:bg-teal-tint hover:text-teal text-navy border border-transparent hover:border-teal transition-all"
+              >
+                + {hub.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Departure Time */}
         <div className="pt-1">
           <DateTimeField
@@ -246,7 +280,7 @@ export default function PlannerPage() {
 
         {/* Priority Segmented Control */}
         <div className="space-y-1.5 pt-1">
-          <label className="block text-xs font-semibold text-navy">
+          <label className="block text-xs font-bold text-navy uppercase tracking-wider">
             {t('planner.preference')}
           </label>
           <SegmentedControl
@@ -260,15 +294,15 @@ export default function PlannerPage() {
           />
         </div>
 
-        {/* Primary Search Button (Always visible on mobile 360x640 above keyboard) */}
+        {/* Primary Search Button */}
         <div className="pt-2">
           <Button
             type="submit"
             variant="primary"
             size="lg"
-            className="w-full justify-center text-sm font-semibold min-h-[44px]"
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-base font-bold shadow-md hover:shadow-lg transition-all"
           >
-            <Search className="w-4 h-4 mr-2" />
+            <Search className="w-5 h-5" />
             <span>{t('planner.search')}</span>
           </Button>
         </div>

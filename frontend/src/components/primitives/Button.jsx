@@ -20,19 +20,19 @@ export default function Button({
   ariaLabel,
   ...props
 }) {
-  const base = 'inline-flex items-center justify-center font-medium transition-colors select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2';
+  const base = 'inline-flex items-center justify-center font-bold tracking-tight transition-all select-none rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2';
   
   const sizes = {
-    sm: 'min-h-[36px] px-3 py-1.5 text-sm rounded-[var(--radius-control)] gap-1.5',
-    md: 'min-h-[44px] px-4 py-2.5 text-base rounded-[var(--radius-control)] gap-2',
-    lg: 'min-h-[48px] px-5 py-3 text-base rounded-[var(--radius-control)] gap-2.5 font-semibold',
+    sm: 'min-h-[38px] px-4 py-1.5 text-xs gap-1.5',
+    md: 'min-h-[44px] px-5 py-2.5 text-sm gap-2',
+    lg: 'min-h-[48px] px-6 py-3 text-base gap-2.5 font-bold shadow-sm',
   };
 
   const variants = {
-    primary: 'bg-teal text-white hover:bg-teal-hover active:bg-[#0C5450] disabled:bg-[#DDE2E3] disabled:text-[#8A949B]',
+    primary: 'bg-teal text-white hover:bg-teal-hover active:bg-[#00605E] disabled:bg-[#DDE2E3] disabled:text-[#8A949B]',
     navy: 'bg-navy text-white hover:bg-navy-dark active:bg-[#0A1620] disabled:bg-[#DDE2E3] disabled:text-[#8A949B]',
-    secondary: 'bg-surface text-teal border border-teal hover:bg-teal-tint active:bg-[#D4EBE9] disabled:border-[#DDE2E3] disabled:text-[#8A949B]',
-    ghost: 'bg-transparent text-tx hover:bg-[#EDF0F0] active:bg-[#DDE2E3] disabled:text-[#8A949B]',
+    secondary: 'bg-white text-navy border border-border hover:bg-surface-bg active:bg-[#EAE4E0] disabled:border-[#DDE2E3] disabled:text-[#8A949B]',
+    ghost: 'bg-transparent text-tx hover:bg-surface-bg active:bg-[#EAE4E0] disabled:text-[#8A949B]',
   };
 
   const stateClass = disabled || loading ? 'cursor-not-allowed opacity-60' : 'cursor-pointer';
@@ -52,7 +52,7 @@ export default function Button({
       ) : Icon ? (
         <Icon className="w-4 h-4 shrink-0" strokeWidth={1.75} />
       ) : null}
-      <span>{children}</span>
+      {children}
     </button>
   );
 }

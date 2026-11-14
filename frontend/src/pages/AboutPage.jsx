@@ -41,7 +41,7 @@ export default function AboutPage() {
         <h2 className="text-base font-bold text-navy">
           {lang === 'hi' ? 'डेटा प्रवाह संरचना' : 'Data Flow Architecture'}
         </h2>
-        <div className="border border-transit-border rounded-panel bg-white p-4">
+        <div className="border border-border rounded-2xl shadow-sm bg-white p-5">
           <svg
             viewBox="0 0 680 140"
             className="w-full h-auto text-xs"
@@ -92,7 +92,7 @@ export default function AboutPage() {
         <h2 className="text-base font-bold text-navy">
           {lang === 'hi' ? 'डेटा स्रोत और स्तर' : 'Data Tiers & Sources'}
         </h2>
-        <div className="overflow-x-auto border border-transit-border rounded-panel bg-white">
+        <div className="overflow-x-auto border border-border rounded-2xl shadow-sm bg-white">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-transit-bg border-b border-transit-border text-navy">
@@ -131,7 +131,7 @@ export default function AboutPage() {
         <h2 className="text-base font-bold text-navy">
           {lang === 'hi' ? 'मॉडल सत्यापन परिणाम' : 'Validation & Sanity Checks'}
         </h2>
-        <div className="border border-transit-border rounded-panel bg-white p-4 space-y-2 text-xs">
+        <div className="border border-border rounded-2xl shadow-sm bg-white p-5 space-y-2 text-xs">
           <div className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-crowd-low shrink-0 mt-0.5" />
             <div>
@@ -175,7 +175,7 @@ export default function AboutPage() {
         <h2 className="text-base font-bold text-navy">
           {lang === 'hi' ? 'शब्दावली (Glossary)' : 'Technical Glossary'}
         </h2>
-        <dl className="border border-transit-border rounded-panel bg-white divide-y divide-transit-borderSubtle text-xs">
+        <dl className="border border-border rounded-2xl shadow-sm bg-white divide-y divide-transit-borderSubtle text-xs overflow-hidden">
           <div className="p-3">
             <dt className="font-bold text-navy">ETM (Electronic Ticketing Machine)</dt>
             <dd className="text-transit-textMuted mt-0.5">

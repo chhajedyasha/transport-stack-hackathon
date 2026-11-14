@@ -8,10 +8,10 @@ export default function Navbar() {
   const { lang, toggleLang, t } = useTranslation();
 
   const navLinkClass = ({ isActive }) =>
-    `inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-[4px] transition-colors ${
+    `inline-flex items-center gap-2 px-4 py-1.5 text-sm font-bold rounded-full transition-all ${
       isActive
-        ? 'text-teal bg-teal/10 font-bold'
-        : 'text-transit-textMuted hover:text-navy hover:bg-transit-bg'
+        ? 'text-teal bg-teal-tint'
+        : 'text-tx-muted hover:text-navy hover:bg-[#F3ECE8]'
     }`;
 
   const mobileNavLinkClass = ({ isActive }) =>
@@ -50,10 +50,10 @@ export default function Navbar() {
             <button
               type="button"
               onClick={toggleLang}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-[4px] border border-transit-border bg-transit-bg text-navy hover:bg-white hover:border-teal transition-colors min-h-[36px]"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full border border-border bg-white text-navy hover:border-teal hover:bg-teal-tint transition-all min-h-[36px] shadow-xs"
               aria-label={`Switch to ${lang === 'en' ? 'Hindi' : 'English'}`}
             >
-              <Globe className="w-3.5 h-3.5 text-teal" />
+              <Globe className="w-4 h-4 text-teal" />
               <span>{lang === 'en' ? 'हिन्दी' : 'English'}</span>
             </button>
           </div>

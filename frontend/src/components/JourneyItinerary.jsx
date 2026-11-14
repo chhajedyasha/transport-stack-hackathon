@@ -63,22 +63,22 @@ export default function JourneyItinerary({
   const intermediateStops = stops.length > 2 ? stops.slice(1, -1) : [];
 
   return (
-    <div className={`bg-surface border border-border rounded-[var(--radius-panel)] overflow-hidden ${className}`}>
+    <div className={`bg-white border border-border rounded-2xl shadow-sm overflow-hidden ${className}`}>
       {/* Header Bar: Route Badge, Timespan, Distance & Duration */}
-      <div className="p-3 sm:p-4 bg-surface-bg border-b border-border">
+      <div className="p-4 bg-[#F8F5F2] border-b border-border">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <RouteBadge routeNumber={routeNum} size="md" />
+          <div className="flex items-center gap-3">
+            <RouteBadge routeNumber={routeNum} size="lg" />
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-navy">
+              <div className="flex items-center gap-2 text-sm font-extrabold text-navy">
                 <span>{dep12h} – {arr12h}</span>
                 <span className="text-tx-muted font-normal">·</span>
-                <span className="text-teal font-semibold">{totalDurationMin} min</span>
+                <span className="text-teal font-black">{totalDurationMin} min</span>
               </div>
-              <div className="text-[11px] text-tx-muted flex items-center gap-2">
-                <span>{operator}</span>
+              <div className="text-xs text-tx-muted flex items-center gap-2 mt-0.5">
+                <span className="font-semibold text-navy">{operator}</span>
                 <span>·</span>
-                <span className="font-medium text-navy">{distanceKm} km route</span>
+                <span className="font-semibold text-navy">{distanceKm} km route</span>
                 <span>·</span>
                 <span>{stops.length} stops</span>
               </div>
@@ -87,7 +87,7 @@ export default function JourneyItinerary({
 
           <div className="flex items-center gap-2">
             <div className="text-right">
-              <div className="text-[10px] uppercase font-semibold text-tx-muted">
+              <div className="text-[10px] uppercase font-bold text-tx-muted tracking-wider">
                 {lang === 'hi' ? 'भीड़ का स्तर' : 'Crowd Level'}
               </div>
               <CrowdIndicator

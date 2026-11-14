@@ -94,7 +94,7 @@ export default function CrowdIndicator({
     <div className={`inline-flex items-center gap-2 select-none ${className}`}>
       {/* 3-Level Discrete Pictogram Meter (Accessible non-color dependency) */}
       <div
-        className="flex items-center gap-1"
+        className="flex items-center gap-1.5"
         role="meter"
         aria-label={`Crowd estimate: ${labelText}`}
         aria-valuenow={current.activeCount}
@@ -107,9 +107,9 @@ export default function CrowdIndicator({
             <span
               key={segIndex}
               className={`
-                rounded-[1px] transition-colors
+                rounded-full transition-colors
                 ${segmentWidth}
-                ${isActive ? current.fillColor : 'bg-[#DDE2E3]'}
+                ${isActive ? current.fillColor : 'bg-[#E2DDD9]'}
               `}
             />
           );

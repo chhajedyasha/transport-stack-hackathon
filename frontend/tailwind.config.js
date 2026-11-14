@@ -23,6 +23,13 @@ export default {
           hover: "var(--color-teal-hover)",
           tint: "var(--color-teal-tint)",
         },
+        transit: {
+          bg: "var(--color-background)",
+          border: "var(--color-border)",
+          borderSubtle: "var(--color-border-subtle)",
+          text: "var(--color-text)",
+          textMuted: "var(--color-text-muted)",
+        },
         surface: {
           DEFAULT: "var(--color-surface)",
           bg: "var(--color-background)",
@@ -57,8 +64,10 @@ export default {
         panel: "var(--radius-panel)",
         badge: "var(--radius-badge)",
         chip: "var(--radius-chip)",
+        button: "var(--radius-button)",
       },
       boxShadow: {
+        card: "var(--shadow-card)",
         overlay: "var(--shadow-overlay)",
       },
       transitionDuration: {

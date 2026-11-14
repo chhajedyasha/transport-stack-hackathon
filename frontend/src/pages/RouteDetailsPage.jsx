@@ -127,7 +127,7 @@ export default function RouteDetailsPage() {
   return (
     <div className="py-4 space-y-4">
       {/* Route Header */}
-      <div className="bg-white border border-transit-border rounded-panel p-4 sm:p-5 space-y-3">
+      <div className="bg-white border border-border rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <RouteBadge routeNumber={routeNum} size="lg" />
@@ -150,10 +150,10 @@ export default function RouteDetailsPage() {
               <Link
                 key={r}
                 to={`/route/${r}`}
-                className={`px-2 py-1 text-xs font-semibold rounded-[4px] border transition-colors ${
+                className={`px-3 py-1 text-xs font-bold rounded-full border transition-all ${
                   routeId === r
-                    ? 'bg-navy text-white border-navy'
-                    : 'bg-transit-bg text-navy border-transit-border hover:bg-white'
+                    ? 'bg-navy text-white border-navy shadow-xs'
+                    : 'bg-white text-navy border-border hover:border-teal hover:bg-teal-tint'
                 }`}
               >
                 {r}
