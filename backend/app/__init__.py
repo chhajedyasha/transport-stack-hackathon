@@ -28,6 +28,10 @@ def create_app(config_class=Config) -> Flask:
         try:
             TransitBase.metadata.create_all(db.engine)
             DemandBase.metadata.create_all(db.engine)
+            from sqlalchemy import text
+            mode_row = db.session.execute(text("SELECT value FROM sys_runtime_metadata WHERE key = 'data_mode' LIMIT 1")).scalar()
+            if mode_row:
+                app.config["DATA_MODE"] = str(mode_row).strip()
         except Exception as e:
             logger.warning(f"Database initialization warning: {e}")
 
