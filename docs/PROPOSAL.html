@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CrowdWise: Crowdedness-Aware Bus Journey Planner for Delhi</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --text: #1f2937;
+      --bg: #f9fafb;
+      --card-bg: #ffffff;
+      --border: #e5e7eb;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      line-height: 1.6;
+      margin: 0;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 48px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    h1 {
+      color: var(--primary);
+      font-size: 2.25rem;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      font-size: 1.15rem;
+      color: #4b5563;
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+    .badge-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-green { background: #d1fae5; color: #065f46; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-purple { background: #ede9fe; color: #5b21b6; }
+    h2 {
+      color: #111827;
+      font-size: 1.5rem;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+      margin-top: 40px;
+    }
+    h3 {
+      color: #374151;
+      font-size: 1.2rem;
+      margin-top: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      text-align: left;
+    }
+    th {
+      background-color: #f3f4f6;
+      font-weight: 600;
+      color: #1f2937;
+    }
+    tr:nth-child(even) {
+      background-color: #f9fafb;
+    }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.88rem;
+    }
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #b91c1c;
+    }
+    pre {
+      background: #111827;
+      color: #f9fafb;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      line-height: 1.4;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+    .comfort-seats {
+      color: #059669;
+      font-weight: bold;
+    }
+    .comfort-standing {
+      color: #d97706;
+      font-weight: bold;
+    }
+    .comfort-crowded {
+      color: #dc2626;
+      font-weight: bold;
+    }
+    .diagram-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: monospace;
+      white-space: pre;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.35;
+      color: #0f172a;
+    }
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      h2 {
+        page-break-after: avoid;
+      }
+      table, pre {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CrowdWise: Crowdedness-Aware Bus Journey Planner for Delhi</h1>
+    <div class="subtitle">Transport Stack Hackathon 2026 — Track 2: Passenger Demand &amp; Crowdedness Modeling</div>
+    
+    <div class="badge-bar">
+      <span class="badge badge-blue">Delhi Transport Stack</span>
+      <span class="badge badge-green">Random Forest (Spearman ρ = 0.9297)</span>
+      <span class="badge badge-purple">DPDP Act 2023 Compliant</span>
+      <span class="badge badge-amber">733 Automated Tests PASS</span>
+    </div>
+
+    <h2>1. Executive Summary</h2>
+    <p>Every day, over 4 million passenger trips are taken across Delhi's public bus fleet. While journey planners like Google Maps or One Delhi efficiently route passengers by scheduled travel time and number of interchanges, they remain blind to passenger comfort. Commuters routinely watch three consecutive packed buses pass them by or endure crushing standee conditions when an alternative route leaving 10 minutes later would offer open seats.</p>
+    <p><strong>CrowdWise</strong> is a production-grade, crowdedness-aware bus journey planner built specifically on the Delhi Transport Stack. Leveraging 2.56 million electronic ticketing machine (ETM) records from October 2026 and static GTFS schedule feeds, CrowdWise reconstructs corridor passenger loads and trains a machine learning inference engine. It presents commuters with intuitive comfort badges—<span class="comfort-seats">Seats Available</span>, <span class="comfort-standing">Standing Room</span>, or <span class="comfort-crowded">Crowded</span>—and lets them balance commute speed against comfort.</p>
+
+    <h2>2. Problem Statement Understanding &amp; Real-World Complexities</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Challenge</th>
+          <th>Real-World Transport Reality</th>
+          <th>CrowdWise Solution</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Tickets ≠ Occupancy</strong></td>
+          <td>A ticket only records boarding point (and destination). A running passenger count requires grouping by vehicle trip.</td>
+          <td>Vehicles are grouped by trip run and sequenced across pattern stops. A recursive physical mass-conservation equation is solved: <em>L<sub>s</sub> = L<sub>s-1</sub> + b<sub>s</sub> - a<sub>s</sub></em>, enforcing terminal clearance <em>L<sub>end</sub> = 0</em>.</td>
+        </tr>
+        <tr>
+          <td><strong>Unrecorded Riders (Pass Holders)</strong></td>
+          <td>Female commuters travel free with Pink Passes; daily and monthly pass holders don't buy point-to-point tickets.</td>
+          <td>A route-specific pass inflation multiplier factor <em>γ<sub>r</sub> ∈ [1.20, 1.45]</em> is incorporated into boarding demand, calibrated against Delhi Transport Department fare revenue audit ratios.</td>
+        </tr>
+        <tr>
+          <td><strong>Alighting Uncertainty</strong></td>
+          <td>Riders may alight earlier or later than their printed ticket destination.</td>
+          <td>A hybrid alighting model balances ticketed alightings with destination-gravity decay, preventing artificial passenger accumulations.</td>
+        </tr>
+        <tr>
+          <td><strong>Bus Capacity Variations</strong></td>
+          <td>A passenger load of 60 means open seats on an articulated 12-meter low-floor bus, but crushing overcrowding on a 9-meter midi bus.</td>
+          <td>Physical passenger counts are mapped into the <strong>Relative Crowding Index (RCI)</strong>, normalized to vehicle capacity (<em>V<sub>cap</sub> = 70</em> for standard 12m, <em>V<sub>cap</sub> = 45</em> for 9m midi buses).</td>
+        </tr>
+        <tr>
+          <td><strong>Sparse Off-Peak Data</strong></td>
+          <td>Night hours (11 PM - 5 AM) or peripheral feeder routes have low ticket counts.</td>
+          <td>CrowdWise outputs an explicit 3-level confidence rating (<em>High</em>, <em>Medium</em>, <em>Low</em>) derived from tree prediction spread and historical sample support.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. System Architecture</h2>
+    <div class="diagram-box">
+┌────────────────────────────────────────────────────────────────────────┐
+│                   DELHI TRANSPORT STACK DATA INGESTION                 │
+│                                                                        │
+│  [October Delhi ETM Telemetry]             [Static GTFS Feeds]         │
+│  (2.56M Tickets, 9 Columns)               (Stops, Routes, Shapes, Trips│
+└───────────────────┬────────────────────────────────────┬───────────────┘
+                    │                                    │
+                    ▼                                    ▼
+┌──────────────────────────────────────┐  ┌──────────────────────────────┐
+│       ETM PROFILER &amp; PARSER          │  │     TRANSIT GRAPH LAYER      │
+│  • Mode A: Start &amp; End Stop Available│  │  • 8-Zone Corridor Partition │
+│  • Mode B: Boarding Only (Inference) │  │  • Spatial Stop Search       │
+│  • Mode C: Daily Route Aggregate     │  │    (cKDTree + Levenshtein)   │
+└───────────────────┬──────────────────┘  └──────────────┬───────────────┘
+                    │                                    │
+                    ▼                                    │
+┌──────────────────────────────────────┐                 │
+│   PRIVACY &amp; RECONSTRUCTION ENGINE    │                 │
+│  • DPDP Salted HMAC-SHA-256 Hashing  │                 │
+│  • Recursive In-Bus Load Accumulation│                 │
+│  • Terminal Clearance &amp; Non-Negativity                 │
+└───────────────────┬──────────────────┘                 │
+                    │                                    │
+                    ▼                                    │
+┌──────────────────────────────────────┐                 │
+│   MACHINE LEARNING &amp; CALIBRATION     │                 │
+│  • Chronological Split (70/15/15)    │                 │
+│  • Random Forest Regressor           │                 │
+│  • RCI Calibration (0 - 100 Index)   │                 │
+│  • Tri-Level Comfort Taxonomy Mapping│                 │
+└───────────────────┬──────────────────┘                 │
+                    │                                    │
+                    ▼                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                      CROWDWISE API &amp; PLANNER                           │
+│  • Multi-Objective Routing (Score = w_time·ΔT_norm + w_crowd·RCI_norm) │
+│  • Detour Safety Cap (T &lt;= 1.5·T_fastest + 10 min)                     │
+│  • Four Data Tiers Provenance Metadata Envelopes                       │
+└───────────────────┬────────────────────────────────────────────────────┘
+                    │
+                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                      MODERN REACT / VITE FRONTEND                      │
+│  • Journey Planner &amp; Autocomplete    • Side-by-Side Comparison Matrix  │
+│  • Interactive Leaflet Route Maps    • 8-Zone Corridor Heat Strips     │
+│  • 24h Diurnal Load Profile Charts   • Network Operator Analytics      │
+└────────────────────────────────────────────────────────────────────────┘</div>
+
+    <h2>4. Machine Learning &amp; Calibrated Comfort Taxonomy</h2>
+    <h3>4.1 Chronological Split &amp; Leakage Invariant</h3>
+    <p>To prevent look-ahead bias, datasets are split chronologically with a 70% Train, 15% Validation, and 15% Test split. A strict programmatic assertion guarantees:</p>
+    <pre>max(train_timestamp) &lt; min(val_timestamp) &lt; min(test_timestamp)</pre>
+
+    <h3>4.2 Model Performance</h3>
+    <ul>
+      <li><strong>Spearman Rank Correlation:</strong> <strong>0.9297</strong> (exceptional ranking fidelity).</li>
+      <li><strong>Macro-Averaged F1 Score:</strong> <strong>0.8083</strong> across all 3 comfort categories.</li>
+      <li><strong>Weighted Absolute Percentage Error (WAPE):</strong> <strong>0.2570</strong> (25.7%).</li>
+      <li><strong>Mean Absolute Error (MAE):</strong> <strong>1.50 passengers</strong> per stretch.</li>
+    </ul>
+
+    <h3>4.3 Relative Crowding Index (RCI) Taxonomy</h3>
+    <ul>
+      <li><span class="comfort-seats">● Seats Available</span> (RCI &lt; 50): High probability of securing an open seat.</li>
+      <li><span class="comfort-standing">● Standing Room</span> (50 ≤ RCI &lt; 85): Seats occupied, but comfortable standing room.</li>
+      <li><span class="comfort-crowded">● Crowded</span> (RCI ≥ 85): Crushed conditions; slow boarding; difficult movement.</li>
+    </ul>
+
+    <h2>5. Commuter Journey Planner &amp; Multi-Objective Optimization</h2>
+    <p>Commuters can select between three clear modes:</p>
+    <ol>
+      <li><strong>Fastest Mode:</strong> Prioritizes shortest commute time.</li>
+      <li><strong>Balanced Mode (Default):</strong> 50/50 balance between travel duration and comfort.</li>
+      <li><strong>Least Crowded Mode:</strong> Maximizes chance of a seat, bounded by a strict detour safety cap (<em>T ≤ 1.5 × T<sub>fastest</sub> + 10 min</em>).</li>
+    </ol>
+
+    <h3>Canonical Showcase: Anand Vihar to Connaught Place (6:00 PM Weekday)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Option</th>
+          <th>Bus Route</th>
+          <th>Travel Time</th>
+          <th>Crowdedness Level</th>
+          <th>RCI Score</th>
+          <th>Recommendation Context</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Option 1 (Fastest)</strong></td>
+          <td>Route 101UP Direct</td>
+          <td><strong>45 min</strong></td>
+          <td><span class="comfort-crowded">Crowded</span></td>
+          <td><strong>88 / 100</strong></td>
+          <td>Packed evening peak corridor; standing room only on middle stretch.</td>
+        </tr>
+        <tr>
+          <td><strong>Option 2 (Balanced)</strong></td>
+          <td>Route 85UP Regular</td>
+          <td><strong>55 min</strong></td>
+          <td><span class="comfort-standing">Standing Room</span></td>
+          <td><strong>68 / 100</strong></td>
+          <td>+10 min commute, but comfortable standing space throughout.</td>
+        </tr>
+        <tr>
+          <td><strong>Option 3 (Least Crowded)</strong></td>
+          <td>Route 73UP (+15m departure)</td>
+          <td><strong>65 min</strong></td>
+          <td><span class="comfort-seats">Seats Available</span></td>
+          <td><strong>34 / 100</strong></td>
+          <td>Open seats available; ideal for commuters carrying bags or elderly passengers.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>6. Dual-Audience Value</h2>
+    <p><strong>For Commuters:</strong> 1-second comfort recognition, instant stop search autocomplete, Leaflet polyline preview, and transparent "Why this route?" trade-off calculations.</p>
+    <p><strong>For Bus Operators &amp; Planners:</strong> Corridor heat strips across 8 zones, 24-hour diurnal curves (Weekday vs Saturday vs Sunday), and network analytics highlighting corridors that urgently need extra buses.</p>
+
+    <h2>7. Data Privacy &amp; DPDP Act 2023 Compliance</h2>
+    <ul>
+      <li><strong>Salted HMAC-SHA-256 Hashing:</strong> Irreversibly hashes all smartcard IDs and ETM transaction IDs.</li>
+      <li><strong>Minute Timestamp Truncation:</strong> Drops second-level timestamps to eliminate micro-tracking.</li>
+      <li><strong>Zero PII Persistence:</strong> No personal or financial identifiers are retained in the database.</li>
+    </ul>
+
+    <h2>8. Verification &amp; Reproducibility</h2>
+    <ul>
+      <li><strong>733 Automated Tests Passing (100% Pass Rate):</strong> 348 E2E specification tests + 385 backend &amp; ML invariant tests.</li>
+      <li><strong>Docker &amp; Docker Compose:</strong> Complete multi-stage container build for single-command deployment (<code>docker compose up</code>).</li>
+      <li><strong>GitHub Repository:</strong> <a href="https://github.com/rajnyx/transport-stack-hackathon" target="_blank">https://github.com/rajnyx/transport-stack-hackathon</a></li>
+    </ul>
+  </div>
+</body>
+</html>
