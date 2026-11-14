@@ -30,18 +30,20 @@ class ETMDataProfiler:
         "ticket_id": {"ticket_id", "ticket_no", "ticketid", "txn_id", "transaction_id", "rec_id"},
         "timestamp": {
             "timestamp", "trans_time", "transaction_time", "datetime", "date_time", "ticket_time",
-            "issue_time", "time", "date", "trip_date"
+            "issue_time", "time", "date", "trip_date", "created_at"
         },
         "route_id": {"route_id", "route_short_name", "route_name", "route", "route_no", "line_id"},
         "direction_id": {"direction_id", "direction", "dir", "trip_dir"},
         "trip_id": {"trip_id", "trip_no", "scheduled_trip_id"},
         "boarding_stop_id": {
             "boarding_stop_id", "origin_stop_id", "from_stop_id", "from_stop", "boarding_stop",
-            "origin", "src_stop", "source_stop", "start_stop_id", "stage_id", "origin_seq"
+            "origin", "src_stop", "source_stop", "start_stop_id", "stage_id", "origin_seq",
+            "start_stop_name", "start_stop"
         },
         "alighting_stop_id": {
             "alighting_stop_id", "destination_stop_id", "dest_stop_id", "dest_stop", "to_stop_id",
-            "alighting_stop", "destination", "dest", "end_stop_id", "dest_seq"
+            "alighting_stop", "destination", "dest", "end_stop_id", "dest_seq",
+            "end_stop_name", "end_stop"
         },
         "passenger_count": {
             "passenger_count", "passengers", "count", "pax", "ticket_count", "quantity", "pax_count"
