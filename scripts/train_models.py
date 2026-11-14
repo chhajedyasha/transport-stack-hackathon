@@ -99,9 +99,10 @@ def train_pipeline(
     # 7. Save Artifacts
     logger.info(f"Saving artifacts to {out_path}...")
     save_dirs = [out_path]
-    # Ensure both models and crowdwise/models are updated if they differ
-    alt_dir = Path("crowdwise/models") if out_path == Path("models") else Path("models")
-    if alt_dir.exists() and alt_dir.resolve() != out_path.resolve():
+    # Ensure out_path is updated
+    alt_dir = Path("models")
+    save_dirs = [out_path]
+    if out_path.resolve() != alt_dir.resolve():
         save_dirs.append(alt_dir)
 
     for target_dir in save_dirs:
@@ -142,22 +143,22 @@ if __name__ == "__main__":
     data_path = args.data_path
     if not data_path:
         candidates = [
-            Path(__file__).parent.parent / "data" / "synthetic" / "zone_hourly_loads.parquet",
-            Path("crowdwise/data/synthetic/zone_hourly_loads.parquet"),
-            Path("data/synthetic/zone_hourly_loads.parquet"),
+            Path(__file__).parent.parent / "data" / "staging" / "staging_zone_loads.parquet",
+            Path("data/staging/staging_zone_loads.parquet"),
+            Path(__file__).parent.parent / "data" / "staging_zone_loads.parquet",
         ]
         for c in candidates:
             if c.exists():
                 data_path = str(c)
                 break
         if not data_path:
-            data_path = "data/synthetic/zone_hourly_loads.parquet"
+            data_path = "data/staging/staging_zone_loads.parquet"
     else:
-        # If relative path doesn't exist from cwd, check relative to crowdwise root
+        # If relative path doesn't exist from cwd, check relative to project root
         p = Path(data_path)
         if not p.exists() and not p.is_absolute():
-            crowdwise_candidate = Path(__file__).parent.parent / data_path
-            if crowdwise_candidate.exists():
-                data_path = str(crowdwise_candidate)
+            candidate = Path(__file__).parent.parent / data_path
+            if candidate.exists():
+                data_path = str(candidate)
 
     train_pipeline(data_path=data_path, output_dir=args.output_dir)

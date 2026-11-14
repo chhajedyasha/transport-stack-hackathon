@@ -90,11 +90,12 @@ $$\max(\text{train\_timestamp}) < \min(\text{val\_timestamp}) < \min(\text{test\
 Historical feature lookups and target-encoding statistics are derived exclusively from the training window.
 
 ### 4.2 Model Performance
-Our tuned `CrowdRandomForestRegressor` outperforms standard historical mean baselines across all key metrics:
-- **Spearman Rank Correlation**: **0.9297** (demonstrating outstanding ability to rank alternative buses by crowdedness).
-- **Macro-Averaged F1 Score**: **0.8083** (high classification fidelity across all 3 comfort categories).
-- **Weighted Absolute Percentage Error (WAPE)**: **0.2570** (25.7% error across high-variance bus stops).
-- **Mean Absolute Error (MAE)**: **1.50 passengers** per stretch.
+Our tuned `RandomForestRegressor` (34.4 MB) was evaluated on the held-out October 26–31 week (672,416 observations) against historical median baselines:
+- **Spearman Rank Correlation**: **0.6879** (+5.0% higher than historical median baseline, demonstrating strong corridor rank fidelity).
+- **Category Classification Accuracy**: **99.30%** on held-out test data.
+- **Macro-Averaged F1 Score**: **0.6787** (balanced classification across comfort categories).
+- **Weighted Absolute Percentage Error (WAPE)**: **55.46%** (outperformed the baseline of 57.17%).
+- **Mean Absolute Error (MAE)**: **1.38 passengers** per corridor stretch.
 
 ### 4.3 Relative Crowding Index (RCI) & 3-Tier Taxonomy
 Raw passenger load $L$ is calibrated into a standardized 0–100 percentile rank:
@@ -150,9 +151,10 @@ CrowdWise was engineered from day one to comply with India's **Digital Personal 
 
 ## 8. Deployment & Operational Feasibility
 
-- **One-Command Reproducibility**: `python scripts/bootstrap.py` automatically initializes database tables, ingests GTFS feeds, generates synthetic test data, trains machine learning models, and runs smoke tests.
-- **Zero-Downtime Data Swapping**: `python scripts/swap_data.py --source <csv.zip>` executes an atomic 9-step transition from synthetic demo mode to production organizer data with automated rollback safeguards.
-- **Tech Stack**: Python 3.14, Flask REST API, SQLAlchemy ORM, Scikit-Learn, Pandas, React 18, Vite, Tailwind CSS, Leaflet Maps, and Recharts.
+- **One-Command Reproducibility**: `python scripts/bootstrap.py` automatically initializes database tables, ingests GTFS schedules, processes 2.56M October ETM tickets, seeds 3.32M demand facts, and verifies system readiness.
+- **Idempotent Real-Data Rebuild**: `python scripts/rebuild_from_real_data.py` executes the complete clean $\rightarrow$ reconstruct $\rightarrow$ seed $\rightarrow$ retrain $\rightarrow$ evaluate pipeline.
+- **Independent Validation**: `python scripts/reconcile_raw_data.py` reconciles raw CSV records directly with database aggregates for 5 busy and 5 quiet routes (`docs/VALIDATION_REPORT.md`).
+- **Tech Stack**: Python 3.12+, Flask REST API, SQLAlchemy ORM, Scikit-Learn, Pandas, React 18, Vite, Tailwind CSS, Leaflet Maps, and Recharts.
 
 CrowdWise transforms raw ticketing transactions into an actionable public good, paving the way for a more humane daily commute across Delhi.
 

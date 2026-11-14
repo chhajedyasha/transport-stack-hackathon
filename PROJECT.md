@@ -145,7 +145,7 @@ CrowdWise is a bus journey planner for Delhi that estimates and visualizes expec
 
 ## Code Layout
 ```
-c:\Users\rajsi\OneDrive\Desktop\Documents\raj\transport  hackathon\crowdwise\
+c:\Users\rajsi\OneDrive\Desktop\Documents\raj\transport  hackathon\transport-stack-hackathon\
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py          # Flask factory, CORS, blueprints, error handlers
@@ -172,25 +172,27 @@ c:\Users\rajsi\OneDrive\Desktop\Documents\raj\transport  hackathon\crowdwise\
 │   ├── vite.config.js
 │   ├── tailwind.config.js
 │   └── src/
-│       ├── App.jsx              # Router & layout with persistent demo banner
+│       ├── App.jsx              # Router & layout with provenance banner
 │       ├── main.jsx
 │       ├── components/          # Reusable UI (StopSelector, RouteCard, LeafletMap, HourlyChart)
 │       ├── pages/               # Planner, Results, RouteDetails, Analytics, About
 │       └── services/            # API client with data tier extraction
 ├── data/
 │   ├── gtfs/                    # Raw static GTFS zip / extracted txt files
-│   ├── synthetic/               # Synthetic tickets & truth loads
-│   └── organizer/               # Organizer ETM drop location
+│   └── organizer/               # Organizer ETM drop location (October-Delhi.csv)
 ├── models/                      # Trained model pickle files & metadata
 ├── scripts/
-│   ├── bootstrap.py             # One-command end-to-end setup (--demo)
-│   ├── generate_demo_data.py    # Synthetic ticket simulator with ground truth
+│   ├── bootstrap.py             # One-command end-to-end setup (strict real-data)
+│   ├── process_october_tickets.py # Ingestion engine for 2.56M October tickets
 │   ├── train_models.py          # Chronological split & model trainer
 │   ├── swap_data.py             # One-command data swap script
 │   └── smoke_test.py            # Full API integration smoke test
 └── docs/
     ├── MASTER_SPEC.md           # Master specification
     ├── AGENTS.md                # Autonomy & agent rules
+    ├── DATASET_INVENTORY.md     # Official dataset profiling & inventory
+    ├── DATA_QUALITY_REPORT.md   # Cleaning funnel & coverage report
+    ├── MODEL_CARD.md            # ML model architecture & metrics
     ├── MANUAL_TODO.md           # Manual owner action checklist
     ├── PROPOSAL.md              # Hackathon proposal
     ├── TECHNICAL_NOTE.md        # Technical methodology note

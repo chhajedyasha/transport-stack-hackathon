@@ -84,12 +84,13 @@ $$\max(\text{Train\_Timestamp}) < \min(\text{Val\_Timestamp}) < \min(\text{Test\
 No future information leaks into historical mean lookups or feature transforms.
 
 ### 3.3 Random Forest Regressor & Confidence Estimation
-The primary model is a tuned `CrowdRandomForestRegressor` with the following hyperparameters:
-- `n_estimators`: 100 decision trees
-- `max_depth`: 16
+The primary model is a tuned `RandomForestRegressor` (34.4 MB) with the following hyperparameters:
+- `n_estimators`: 45 decision trees
+- `max_depth`: 15
 - `min_samples_split`: 5
 - `min_samples_leaf`: 2
 - `n_jobs`: -1 (parallelized multi-core training)
+- Model artifact size: 34.4 MB (compressed with joblib `compress=3` for safe remote repository distribution)
 
 To estimate predictive confidence, individual tree predictions $\{\hat{y}_t\}_{t=1}^{100}$ are collected to calculate the 10th and 90th percentiles ($p_{10}, p_{90}$). The relative spread is defined as:
 $$\text{Relative Spread} = \frac{p_{90} - p_{10}}{\max(\hat{y}, 0.1)}$$
@@ -144,16 +145,18 @@ Automated domain tests verify transport physics and model safety before deployme
 
 | Sanity Check | Mathematical Test Condition | Empirical Result | Status |
 | :--- | :--- | :--- | :---: |
-| **Diurnal Morning Peak** | $\text{Load}_{08:00-10:00} / \text{Load}_{12:00-14:00} \ge 1.25$ | **1.48×** | **PASS** |
-| **Diurnal Evening Peak** | $\text{Load}_{17:00-20:00} / \text{Load}_{12:00-14:00} \ge 1.20$ | **1.52×** | **PASS** |
+| **Diurnal Morning Peak** | $\text{Load}_{08:00-10:00} / \text{Load}_{12:00-14:00} \ge 1.25$ | **2.84×** | **PASS** |
+| **Diurnal Evening Peak** | $\text{Load}_{17:00-20:00} / \text{Load}_{12:00-14:00} \ge 1.20$ | **2.48×** | **PASS** |
 | **Physical Non-Negativity** | $\min(L_s) \ge 0 \quad \forall s$ | $\min = 0.00$ | **PASS** |
-| **Weekday vs Sunday** | $\text{Mean Load}_{\text{Weekday}} > \text{Mean Load}_{\text{Sunday}}$ | **1.34×** | **PASS** |
+| **Weekday vs Sunday** | $\text{Mean Load}_{\text{Weekday}} > \text{Mean Load}_{\text{Sunday}}$ | **1.68×** | **PASS** |
 | **Terminal Clearance** | $L_{\text{terminus}} = 0 \quad \forall \text{trips}$ | $0.00$ | **PASS** |
 | **DPDP Salted Hash** | $\text{len}(\text{hash}) = 64 \land \text{PII} = \emptyset$ | $64$ chars, $0$ leaks | **PASS** |
 
-### Model Benchmark Summary
-- **Spearman Rank Correlation**: `0.9297`
-- **Category Macro-F1**: `0.8083`
-- **WAPE**: `0.2570`
-- **MAE**: `1.50` passengers
+### Model Benchmark Summary (Held-Out Test Set: Oct 26–31, 2026)
+- **Spearman Rank Correlation**: `0.6879` (+5.0% higher than historical baseline)
+- **Category Classification Accuracy**: `99.30%`
+- **Category Macro-F1**: `0.6787`
+- **WAPE**: `55.46%` (outperformed baseline of 57.17%)
+- **MAE**: `1.38` passengers
+- **Dataset Sample**: 672,416 held-out test observations / 3,322,312 total corridor facts
 

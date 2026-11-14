@@ -218,10 +218,11 @@ class SpecContractTestClient:
     otherwise, evaluates requests against authoritative API specification contracts.
     """
 
-    def __init__(self, data_mode: str = "demo"):
+    def __init__(self, data_mode: str = "demo", use_flask: bool = False):
         self.data_mode = data_mode
         self._flask_client = None
-        self._init_flask_client_if_available()
+        if use_flask:
+            self._init_flask_client_if_available()
 
     def _init_flask_client_if_available(self):
         try:

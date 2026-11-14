@@ -57,7 +57,12 @@ def run_smoke_tests():
             None,
             "Journey Planner: Least Crowded Mode",
         ),
+        ("GET", "/api/meta", None, "System Metadata & Active Provenance"),
         ("GET", "/api/analytics/summary", None, "Network Analytics Summary"),
+        ("GET", "/api/analytics/daily-volume", None, "October 31-Day Daily Volume Timeseries"),
+        ("GET", "/api/data-quality", None, "Data Quality & Cleaning Funnel Report"),
+        ("GET", "/api/model/metrics", None, "Held-Out Model Metrics & Split"),
+        ("GET", "/api/validation/sanity", None, "Domain Sanity Check Scorecard"),
     ]
 
     passed = 0

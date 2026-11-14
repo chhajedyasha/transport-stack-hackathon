@@ -252,7 +252,7 @@ class StopSearchEngine:
             self.kdtree = None
 
     def search_text(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        """Executes combined exact, prefix, and accelerated fuzzy text search.
+        """Executes combined exact, prefix, substring, and accelerated fuzzy text search.
 
         Args:
             query: User search string.
@@ -268,6 +268,20 @@ class StopSearchEngine:
         q_lower = q.lower()
         q_upper = q.upper()
 
+        # Vernacular transliteration normalization for common Delhi transit names
+        vernacular_map = {
+            "kashmiri": "kashmere",
+            "dholakuan": "dhaula kuan",
+            "dhawla": "dhaula",
+            "aims": "aiims",
+            "cannaught": "connaught",
+            "chandani": "chandni",
+        }
+        q_norm = q_lower
+        for k, v in vernacular_map.items():
+            if k in q_norm:
+                q_norm = q_norm.replace(k, v)
+
         matched_indices: Dict[int, Tuple[float, str]] = {}  # idx -> (score, match_type)
 
         # 1. Exact stop code match
@@ -276,21 +290,42 @@ class StopSearchEngine:
             matched_indices[idx] = (1.00, "exact_code")
 
         # 2. Exact stop name match
-        if q_lower in self.by_exact_name:
-            for idx in self.by_exact_name[q_lower]:
-                matched_indices[idx] = (0.95, "exact_name")
+        for term in set(filter(None, [q_lower, q_norm])):
+            if term in self.by_exact_name:
+                for idx in self.by_exact_name[term]:
+                    matched_indices[idx] = (0.95, "exact_name")
 
-        # 3. Prefix match across stops
+        # 3. Substring & Prefix match across stops
+        terms_to_check = set(filter(None, [q_lower, q_norm]))
         for idx, stop in enumerate(self.stops):
+            if idx in matched_indices:
+                continue
             name_lower = str(stop.get("stop_name", "")).lower()
             code_upper = str(stop.get("stop_code", "")).upper()
-            if code_upper.startswith(q_upper) and idx not in matched_indices:
+            if code_upper.startswith(q_upper):
                 matched_indices[idx] = (0.85, "prefix_code")
-            elif name_lower.startswith(q_lower) and idx not in matched_indices:
-                matched_indices[idx] = (0.80, "prefix_name")
+                continue
+            for term in terms_to_check:
+                if name_lower.startswith(term):
+                    matched_indices[idx] = (0.90, "prefix_name")
+                    break
+                elif len(term) >= 3 and term in name_lower:
+                    matched_indices[idx] = (0.88, "substring_name")
+                    break
+
+        # Fallback: Multi-word query subphrase match (e.g. 'dhaula kuan complex' -> 'dhaula kuan')
+        if len(matched_indices) < limit and " " in q_norm:
+            subphrase = " ".join(q_norm.split()[:-1]).strip()
+            if len(subphrase) >= 4:
+                for idx, stop in enumerate(self.stops):
+                    if idx in matched_indices:
+                        continue
+                    name_lower = str(stop.get("stop_name", "")).lower()
+                    if subphrase in name_lower:
+                        matched_indices[idx] = (0.82, "substring_name")
 
         # 4. Inverted Trigram + Levenshtein Fuzzy Search
-        q_tris = _get_trigrams(q)
+        q_tris = _get_trigrams(q_norm)
         if q_tris:
             candidate_counts: Dict[int, int] = defaultdict(int)
             for tri in q_tris:
@@ -300,14 +335,14 @@ class StopSearchEngine:
             min_shared = max(1, int(0.20 * len(q_tris)))
             for idx, shared_count in candidate_counts.items():
                 if idx in matched_indices:
-                    continue  # Already matched via exact/prefix
+                    continue  # Already matched via exact/prefix/substring
                 if shared_count >= min_shared:
                     name_lower = str(self.stops[idx]["stop_name"]).lower()
                     denom = len(q_tris) + len(self.stop_trigrams[idx])
                     s_tri = (2.0 * shared_count) / max(1, denom)
                     if s_tri >= 0.20:
-                        s_lev = _levenshtein_ratio(q_lower, name_lower)
-                        is_pfx = 1.0 if name_lower.startswith(q_lower) else 0.0
+                        s_lev = _levenshtein_ratio(q_norm, name_lower)
+                        is_pfx = 1.0 if name_lower.startswith(q_norm) else 0.0
                         composite = (0.50 * s_tri) + (0.50 * s_lev) + (0.15 * is_pfx)
                         if composite >= 0.45:
                             matched_indices[idx] = (round(composite, 3), "fuzzy")

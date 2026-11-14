@@ -59,9 +59,9 @@ def run_sanity_checks(
 
         am_ratio = (am_load / mid_load) if (mid_load > 0 and len(am_rows) > 0) else 1.25
         pm_ratio = (pm_load / mid_load) if (mid_load > 0 and len(pm_rows) > 0) else 1.20
-        am_ok = (am_ratio >= 1.20) if (len(am_rows) > 0 and mid_load > 0) else True
-        pm_ok = (pm_ratio >= 1.15) if (len(pm_rows) > 0 and mid_load > 0) else True
-        night_ok = (mid_load >= night_load) if (len(night_rows) > 0 and mid_load > 0) else True
+        am_ok = (am_ratio >= 1.24) if (len(am_rows) > 0 and mid_load > 0) else True
+        pm_ok = (pm_ratio >= 1.19) if (len(pm_rows) > 0 and mid_load > 0) else True
+        night_ok = (mid_load > night_load) if (len(night_rows) > 0 and mid_load > 0) else True
         diurnal_ok = bool(am_ok and pm_ok and night_ok)
         status_diurnal = "PASS" if diurnal_ok else "FAIL"
 

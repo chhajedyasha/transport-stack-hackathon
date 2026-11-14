@@ -36,23 +36,23 @@ The comprehensive, opaque-box, requirement-driven End-to-End (E2E) Test Suite fo
 To run the complete test suite:
 
 ```bash
-python -m pytest crowdwise/tests/e2e/ -v
+python -m pytest tests/e2e/ -v
 ```
 
 ### Execution by Tier
 
 ```bash
 # Run Tier 1 (150 Feature Coverage tests)
-python -m pytest crowdwise/tests/e2e/test_tier1_features.py -v
+python -m pytest tests/e2e/test_tier1_features.py -v
 
 # Run Tier 2 (150 Boundary & Corner Case tests)
-python -m pytest crowdwise/tests/e2e/test_tier2_boundaries.py -v
+python -m pytest tests/e2e/test_tier2_boundaries.py -v
 
 # Run Tier 3 (32 Cross-Feature Interaction tests)
-python -m pytest crowdwise/tests/e2e/test_tier3_combinations.py -v
+python -m pytest tests/e2e/test_tier3_combinations.py -v
 
 # Run Tier 4 (16 Real-World Delhi Commuter Scenarios)
-python -m pytest crowdwise/tests/e2e/test_tier4_scenarios.py -v
+python -m pytest tests/e2e/test_tier4_scenarios.py -v
 ```
 
 ---
@@ -118,11 +118,11 @@ python -m pytest crowdwise/tests/e2e/test_tier4_scenarios.py -v
 ## 5. Artifacts Produced
 
 - `TEST_INFRA.md` (Root documentation of testing architecture and runner commands)
-- `crowdwise/tests/__init__.py`
-- `crowdwise/tests/e2e/__init__.py`
-- `crowdwise/tests/e2e/conftest.py` (Fixtures, SpecReferenceOracle, SpecContractTestClient)
-- `crowdwise/tests/e2e/test_tier1_features.py` (150 tests)
-- `crowdwise/tests/e2e/test_tier2_boundaries.py` (150 tests)
-- `crowdwise/tests/e2e/test_tier3_combinations.py` (32 tests)
-- `crowdwise/tests/e2e/test_tier4_scenarios.py` (16 tests)
+- `tests/__init__.py`
+- `tests/e2e/__init__.py`
+- `tests/e2e/conftest.py` (Fixtures, SpecReferenceOracle, SpecContractTestClient)
+- `tests/e2e/test_tier1_features.py` (150 tests)
+- `tests/e2e/test_tier2_boundaries.py` (150 tests)
+- `tests/e2e/test_tier3_combinations.py` (32 tests)
+- `tests/e2e/test_tier4_scenarios.py` (16 tests)
 - `TEST_READY.md` (Certification report)

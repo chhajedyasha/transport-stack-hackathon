@@ -19,7 +19,6 @@ def main():
     print("=" * 65)
 
     data_candidates = [
-        root_dir / "data" / "synthetic" / "zone_hourly_loads.parquet",
         root_dir / "data" / "staging" / "staging_zone_loads.parquet",
     ]
     data_path = next((p for p in data_candidates if p.exists()), None)
@@ -31,7 +30,7 @@ def main():
     print(f"Loading evaluation dataset: {data_path.name}")
     df = pd.read_parquet(data_path)
     if "data_tier" not in df.columns:
-        df["data_tier"] = "demo_synthetic"
+        df["data_tier"] = "organizer"
 
     # Sample representative slice for fast verification
     eval_df = df.sample(min(len(df), 500), random_state=42).copy().reset_index(drop=True)

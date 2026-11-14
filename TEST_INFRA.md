@@ -72,10 +72,10 @@ The test suite is structured into four complementary validation tiers totaling *
 
 ## 3. Directory Layout & Organization
 
-All test files reside under `crowdwise/tests/e2e/`:
+All test files reside under `tests/e2e/`:
 
 ```
-c:\Users\rajsi\OneDrive\Desktop\Documents\raj\transport  hackathon\crowdwise\tests\
+tests/
 ├── __init__.py
 └── e2e/
     ├── __init__.py
@@ -141,25 +141,25 @@ $$\text{Score} = w_{\text{time}} \cdot \left(\frac{T_{\text{total}}}{\bar{T}}\ri
 ### Full Test Suite Execution
 To run all 348 E2E test cases:
 ```bash
-python -m pytest crowdwise/tests/e2e/ -v
+python -m pytest tests/e2e/ -v
 ```
 
 ### Execution by Tier
 ```bash
 # Tier 1: Feature Coverage (150 tests)
-python -m pytest crowdwise/tests/e2e/test_tier1_features.py -v
+python -m pytest tests/e2e/test_tier1_features.py -v
 
 # Tier 2: Boundary & Corner Cases (150 tests)
-python -m pytest crowdwise/tests/e2e/test_tier2_boundaries.py -v
+python -m pytest tests/e2e/test_tier2_boundaries.py -v
 
 # Tier 3: Cross-Feature Interactions (32 tests)
-python -m pytest crowdwise/tests/e2e/test_tier3_combinations.py -v
+python -m pytest tests/e2e/test_tier3_combinations.py -v
 
 # Tier 4: Real-World Delhi Commute Scenarios (16 tests)
-python -m pytest crowdwise/tests/e2e/test_tier4_scenarios.py -v
+python -m pytest tests/e2e/test_tier4_scenarios.py -v
 ```
 
 ### Quick Summary Check
 ```bash
-python -m pytest crowdwise/tests/e2e/ -q
+python -m pytest tests/e2e/ -q
 ```

@@ -40,8 +40,8 @@ def api_response(
     elapsed_ms = round(max(0.0, (time.time() - start_time) * 1000.0), 2) if start_time else 0.0
     
     # Active runtime data mode
-    data_mode = current_app.config.get("DATA_MODE", "demo") if current_app else "demo"
-    ticket_tier = "organizer" if data_mode in ("organizer", "production", "live") else "demo_synthetic"
+    data_mode = current_app.config.get("DATA_MODE", "organizer") if current_app else "organizer"
+    ticket_tier = "organizer" if data_mode in ("organizer", "production", "live") else "real_public"
     
     # Determine top-level tier
     if data_tier:

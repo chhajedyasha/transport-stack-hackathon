@@ -14,8 +14,8 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_SQLITE_PATH.as_posix()}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Data Mode: 'demo' (synthetic) or 'organizer' (official ETM)
-    DATA_MODE = os.getenv("DATA_MODE", "demo")
+    # Data Mode: 'organizer' (official ETM) or 'real_public' (GTFS)
+    DATA_MODE = os.getenv("DATA_MODE", "organizer")
     
     # Models path
     MODELS_DIR = BASE_DIR.parent / "models"

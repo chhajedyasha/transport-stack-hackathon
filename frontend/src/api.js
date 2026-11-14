@@ -61,3 +61,19 @@ export async function getAnalyticsSummary() {
   return fetchApi('/analytics/summary');
 }
 
+export async function getDailyVolume() {
+  return fetchApi('/analytics/daily-volume');
+}
+
+export async function getDataQualityReport() {
+  return fetchApi('/data-quality');
+}
+
+export async function getModelMetrics() {
+  return fetchApi('/model/metrics');
+}
+
+export async function getSanityValidation() {
+  return fetchApi('/validation/sanity');
+}
+

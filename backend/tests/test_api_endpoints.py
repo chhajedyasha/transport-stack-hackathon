@@ -49,7 +49,6 @@ def test_meta_endpoint(client):
     tiers = json_data["data"]["provenance_tiers"]
     assert "real_public" in tiers
     assert "organizer" in tiers
-    assert "demo_synthetic" in tiers
     assert "estimated" in tiers
 
 

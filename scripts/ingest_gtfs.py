@@ -27,13 +27,13 @@ def main():
         "--gtfs-dir",
         type=str,
         default=os.path.join(os.path.dirname(__file__), "..", "data", "raw", "gtfs"),
-        help="Path to GTFS text files directory (default: crowdwise/data/raw/gtfs)",
+        help="Path to GTFS text files directory (default: data/raw/gtfs)",
     )
     parser.add_argument(
         "--db-url",
         type=str,
         default=f"sqlite:///{os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend', 'crowdwise.db'))}",
-        help="Target database URL (default: sqlite:///crowdwise/backend/crowdwise.db)",
+        help="Target database URL (default: sqlite:///backend/crowdwise.db)",
     )
     parser.add_argument(
         "--chunksize",
