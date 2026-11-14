@@ -9,6 +9,10 @@ export default function AboutPage() {
   const [modelMetrics, setModelMetrics] = useState(null);
 
   useEffect(() => {
+    document.title = lang === 'hi' ? 'डेटा और कार्यप्रणाली | CrowdWise' : 'Data & Method | CrowdWise Delhi';
+  }, [lang]);
+
+  useEffect(() => {
     getDataQualityReport()
       .then((res) => setQualityData(res?.data))
       .catch(() => {});

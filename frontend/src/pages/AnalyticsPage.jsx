@@ -22,6 +22,10 @@ export default function AnalyticsPage() {
   const [sortAsc, setSortAsc] = useState(false);
 
   useEffect(() => {
+    document.title = lang === 'hi' ? 'दिल्ली बस नेटवर्क विश्लेषण | CrowdWise' : 'Network Analytics | CrowdWise Delhi';
+  }, [lang]);
+
+  useEffect(() => {
     Promise.all([
       getAnalyticsSummary().catch(() => ({ data: null })),
       getDailyVolume().catch(() => ({ data: [] })),

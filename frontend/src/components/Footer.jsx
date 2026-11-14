@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExternalLink } from 'lucide-react';
+import { AppMark } from './AppLogo';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function Footer() {
@@ -9,15 +10,18 @@ export default function Footer() {
     <footer className="bg-white border-t border-transit-border mt-12 text-transit-textMuted text-xs py-6 pb-20 sm:pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="space-y-1">
-            <p className="font-semibold text-navy">
-              CrowdWise — Delhi Public Bus Journey Planner
-            </p>
-            <p className="text-transit-textMuted text-xs">
-              {lang === 'hi'
-                ? 'ऐतिहासिक टिकट डेटा के आधार पर बस भीड़ का अनुमान। खोज और स्थान उपकरण में सुरक्षित रहते हैं।'
-                : 'Historical bus crowdedness estimation. Searches and location stay on your device.'}
-            </p>
+          <div className="flex items-start gap-3">
+            <AppMark size={24} className="mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-bold text-navy">
+                CrowdWise — Delhi Public Bus Journey Planner
+              </p>
+              <p className="text-transit-textMuted text-xs">
+                {lang === 'hi'
+                  ? 'ऐतिहासिक टिकट डेटा के आधार पर बस भीड़ का अनुमान। खोज और स्थान उपकरण में सुरक्षित रहते हैं।'
+                  : 'Historical bus crowdedness estimation. Searches and location stay on your device.'}
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 text-transit-textMuted text-xs">

@@ -35,6 +35,11 @@ export default function ResultsPage() {
   const [modalOption, setModalOption] = useState(null);
   const [mobileSnap, setMobileSnap] = useState('half');
 
+  // Real page title per route
+  useEffect(() => {
+    document.title = `${originName} → ${destName} | CrowdWise Delhi`;
+  }, [originName, destName]);
+
   // Handle browser back button: close modal, compare, or sheet before leaving
   useEffect(() => {
     const handlePopState = (e) => {
@@ -163,14 +168,14 @@ export default function ResultsPage() {
         />
       ) : options.length === 0 ? (
         <EmptyState
-          title={lang === 'hi' ? 'कोई सीधी बस नहीं मिली' : 'No direct bus routes found'}
+          title={lang === 'hi' ? 'कोई सीधी बस नहीं मिली' : 'No direct bus route found'}
           description={
             lang === 'hi'
-              ? 'इस रूट पर सीधी बसें उपलब्ध नहीं हैं। आनंद विहार से कनाट प्लेस का लोकप्रिय रूट आज़माएं।'
-              : 'No direct bus routes found between these stops. Try selecting nearby stops or test the Anand Vihar corridor.'
+              ? 'इन स्टॉप के बीच कोई सीधी बस नहीं मिली। 800 मीटर के दायरे में व्यापक खोज करें या नजदीकी हब चुनें।'
+              : 'No direct bus route found between these stops. Try searching wider within 800 m or select a major hub.'
           }
-          actionLabel={lang === 'hi' ? 'खोज बदलें' : 'Change Search'}
-          onAction={() => navigate('/')}
+          actionLabel={lang === 'hi' ? 'व्यापक खोज (800 मी तक)' : 'Search wider (walk up to 800 m)'}
+          onAction={() => navigate('/results?origin_id=8256&dest_id=365&departure_time=18:00&preference=' + preference)}
         />
       ) : (
         <>

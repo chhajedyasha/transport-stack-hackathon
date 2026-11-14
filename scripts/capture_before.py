@@ -1,6 +1,7 @@
 import subprocess
 import os
 import sys
+import tempfile
 
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 OUT_DIR = os.path.abspath(r"transport-stack-hackathon\docs\design\before")
@@ -20,22 +21,24 @@ viewports = [
     ("desktop_1440", 1440, 900)
 ]
 
-for name, url in targets:
-    for vp_name, w, h in viewports:
-        out_file = os.path.join(OUT_DIR, f"{name}_{vp_name}.png")
-        cmd = [
-            CHROME,
-            "--headless=new",
-            "--disable-gpu",
-            f"--window-size={w},{h}",
-            f"--screenshot={out_file}",
-            "--virtual-time-budget=3000",
-            url
-        ]
-        print(f"Capturing {name} {vp_name} ({w}x{h})...")
-        try:
-            subprocess.run(cmd, capture_output=True, timeout=12)
-        except Exception as e:
-            print(f"Error {name} {vp_name}: {e}")
+with tempfile.TemporaryDirectory() as tmp_profile:
+    for name, url in targets:
+        for vp_name, w, h in viewports:
+            out_file = os.path.join(OUT_DIR, f"{name}_{vp_name}.png")
+            cmd = [
+                CHROME,
+                "--headless=new",
+                "--disable-gpu",
+                f"--user-data-dir={tmp_profile}",
+                f"--window-size={w},{h}",
+                f"--screenshot={out_file}",
+                "--virtual-time-budget=3000",
+                url
+            ]
+            print(f"Capturing {name} {vp_name} ({w}x{h})...")
+            try:
+                subprocess.run(cmd, capture_output=True, timeout=12)
+            except Exception as e:
+                print(f"Error {name} {vp_name}: {e}")
 
 print("All before screenshots saved to docs/design/before/.")

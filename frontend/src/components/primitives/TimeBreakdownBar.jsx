@@ -17,17 +17,17 @@ export default function TimeBreakdownBar({
   return (
     <div className={`flex flex-col gap-1.5 w-full ${className}`}>
       {/* Visual Proportion Bar */}
-      <div className="h-2 w-full flex rounded-full overflow-hidden bg-transit-bg">
+      <div className="h-2 w-full flex rounded-full overflow-hidden bg-border/40">
         {walkMinutes > 0 && (
           <div
             style={{ width: `${walkPct}%` }}
-            className="bg-transit-textMuted/40 transition-all"
+            className="bg-tx-muted/40 transition-all"
             title={`${walkMinutes} min walk`}
           />
         )}
         <div
           style={{ width: `${waitPct}%` }}
-          className="bg-[#F2B01E] transition-all"
+          className="bg-crowd-mod transition-all"
           title={`${waitMinutes} min wait`}
         />
         <div
@@ -37,16 +37,16 @@ export default function TimeBreakdownBar({
         />
       </div>
 
-      {/* Numerical Labels */}
-      <div className="flex items-center gap-3 text-xs text-transit-textMuted font-medium tabular-nums">
+      {/* Numerical Labels with Tabular Numerals */}
+      <div className="flex items-center gap-3 text-xs text-tx-muted font-medium tabular-nums">
         {walkMinutes > 0 && (
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-transit-textMuted/40" />
+            <span className="w-2 h-2 rounded-full bg-tx-muted/50" />
             <span>{walkMinutes} {t('results.min')} {t('results.walk')}</span>
           </span>
         )}
         <span className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-[#F2B01E]" />
+          <span className="w-2 h-2 rounded-full bg-crowd-mod" />
           <span>{waitMinutes} {t('results.min')} {t('results.wait')}</span>
         </span>
         <span className="flex items-center gap-1 text-navy font-semibold">

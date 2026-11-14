@@ -1,15 +1,15 @@
 /**
  * CrowdWise Design System Tokens
- * Strictly defined CSS variables mapped to Tailwind and public transit accessibility specs.
+ * Strictly defined CSS variables mapped to Tailwind and public transit accessibility specs (WCAG 2.2 AA).
  */
 
 :root {
-  /* Core Brand Colors */
+  /* Core Brand Colors (Navy for structural grounding, Pine Teal for primary action) */
   --color-navy: #142B3B;
   --color-navy-dark: #0E1F2B;
-  --color-teal: #147D78;
-  --color-teal-hover: #106662;
-  --color-teal-tint: #E8F4F3;
+  --color-teal: #00828A;
+  --color-teal-hover: #006D74;
+  --color-teal-tint: #E6F5F6;
 
   /* Surfaces & Backgrounds */
   --color-background: #F7F8F6;
@@ -22,30 +22,37 @@
   --color-text-muted: #5F6B73;
   --color-text-inverse: #FFFFFF;
 
-  /* Crowdedness Status Colors */
-  --color-crowd-low: #1B7F52;
-  --color-crowd-low-tint: #EAF6EE;
-  --color-crowd-mod: #F2B01E;
+  /* Semantic Crowdedness Status Colors (All >= 4.5:1 against white) */
+  --color-crowd-low: #15803D;
+  --color-crowd-low-tint: #ECFDF5;
+  --color-crowd-low-border: #A7F3D0;
+
+  --color-crowd-mod: #B45309;
   --color-crowd-mod-text: #8A5A00;
-  --color-crowd-mod-tint: #FEF7E8;
-  --color-crowd-high: #C8372D;
-  --color-crowd-high-tint: #FBEBE9;
-  --color-crowd-unknown: #8A949B;
-  --color-crowd-unknown-tint: #F1F3F4;
+  --color-crowd-mod-tint: #FFFBEB;
+  --color-crowd-mod-border: #FDE68A;
+
+  --color-crowd-high: #B91C1C;
+  --color-crowd-high-tint: #FEF2F2;
+  --color-crowd-high-border: #FECACA;
+
+  --color-crowd-unknown: #64748B;
+  --color-crowd-unknown-tint: #F1F5F9;
+  --color-crowd-unknown-border: #E2E8F0;
 
   /* Focus Ring */
-  --color-focus-ring: #147D78;
+  --color-focus-ring: #00828A;
 
-  /* Radius Tokens (Strictly <= 8px; fully round only for badges/chips) */
+  /* Radius Tokens (Strictly <= 8px; fully round only for badges/chips/pills) */
   --radius-control: 4px;
-  --radius-panel: 6px;
+  --radius-panel: 8px;
   --radius-badge: 4px;
   --radius-chip: 9999px;
 
-  /* Elevation / Shadows (No shadow by default; 1 subtle elevation for popovers/sheets) */
+  /* Elevation / Shadows (No shadow on cards; 1 subtle elevation for popovers/sheets) */
   --shadow-overlay: 0 4px 16px rgba(20, 43, 59, 0.08);
 
-  /* Motion Tokens (Animate ONLY transform & opacity) */
+  /* Motion Tokens (Animate ONLY transform & opacity, 120ms to 280ms) */
   --duration-fast: 120ms;
   --duration-medium: 200ms;
   --duration-slow: 280ms;

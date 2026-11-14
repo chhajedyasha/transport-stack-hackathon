@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, ArrowRight, Info } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowRight, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import RouteBadge from './RouteBadge';
-import CrowdStrip from './CrowdStrip';
+import CrowdIndicator from './CrowdIndicator';
 import TimeBreakdownBar from './TimeBreakdownBar';
 import { useTranslation } from '../../i18n/LanguageContext';
 
@@ -18,7 +18,7 @@ export default function TransitRow({
   const { t, lang } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Confidence text in plain words (per prompt rule: "Based on a lot of data / some data / little data")
+  // Confidence text in plain words per Transport Stack guidelines
   const getConfidenceText = (conf) => {
     const c = String(conf || '').toLowerCase();
     if (c === 'high') {
@@ -30,9 +30,9 @@ export default function TransitRow({
     return lang === 'hi' ? 'कम डेटा पर आधारित (सावधानी रखें)' : 'Based on limited data';
   };
 
-  // Convert "18:00" or raw string to 12-hour am/pm
+  // Convert "18:00" to 12-hour format e.g. "6:00 pm"
   const formatTime12h = (timeStr) => {
-    if (!timeStr) return '8:42 am';
+    if (!timeStr) return '6:00 pm';
     const [hStr, mStr] = timeStr.split(':');
     let h = parseInt(hStr, 10);
     const m = mStr || '00';
@@ -44,72 +44,108 @@ export default function TransitRow({
 
   const totalMin = option.total_duration_minutes || 45;
   const rideMin = option.ride_time_minutes || totalMin;
-  const waitMin = option.wait_time_minutes || 0;
+  const waitMin = option.wait_time_minutes || 5;
   const walkMin = option.walk_time_minutes || 0;
   const depTime = formatTime12h(option.departure_time || option.scheduled_departure);
   const routeNum = option.route_short_name || option.route_id || '73UP';
   const distKm = option.distance_km || option.timing?.distance_km;
   const stopsCount = option.stops_count || option.stops?.length;
 
-  // Crowd text construction
+  // Crowd categories
   const crowdOrigin = option.crowd_category || 'low';
   const peakCrowd = option.peak_crowd_category || option.crowd_category || 'moderate';
+
+  const prefLabel =
+    preference === 'fastest'
+      ? (lang === 'hi' ? 'सबसे तेज़' : 'fastest')
+      : preference === 'least_crowded'
+      ? (lang === 'hi' ? 'कम भीड़' : 'least crowded')
+      : (lang === 'hi' ? 'संतुलित' : 'balanced');
 
   return (
     <div
       onClick={onSelect}
       className={`
-        bg-white border rounded-[6px] transition-colors cursor-pointer select-none
-        ${isRecommended ? 'border-l-[3px] border-l-teal' : 'border-transit-border'}
-        ${isSelected ? 'ring-2 ring-teal border-teal' : 'hover:border-transit-textMuted/40'}
+        bg-surface border rounded-[var(--radius-panel)] transition-colors cursor-pointer select-none
+        ${isRecommended ? 'border-l-[4px] border-l-teal' : 'border-border'}
+        ${isSelected ? 'ring-2 ring-teal border-teal' : 'hover:border-tx-muted/40'}
         ${className}
       `}
     >
       {/* Top recommendation indicator */}
       {isRecommended && (
-        <div className="px-3 pt-2 pb-0.5 text-[11px] font-semibold text-teal flex items-center gap-1">
+        <div className="px-3.5 pt-2.5 pb-0.5 text-xs font-semibold text-teal flex items-center justify-between">
           <span>
             {lang === 'hi'
-              ? `अनुशंसित विकल्प (${preference === 'balanced' ? 'संतुलित' : preference === 'least_crowded' ? 'कम भीड़' : 'सबसे तेज़'})`
-              : `Recommended for ${preference.replace('_', ' ')}`}
+              ? `अनुशंसित विकल्प (${prefLabel})`
+              : `Recommended for ${prefLabel}`}
           </span>
+          {onOpenWhyModal && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenWhyModal(option);
+              }}
+              className="inline-flex items-center gap-1 text-[11px] text-teal hover:underline font-semibold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-teal rounded"
+              title={lang === 'hi' ? 'स्कोरिंग विवरण' : 'Why this route'}
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>{lang === 'hi' ? 'कारण' : 'Why'}</span>
+            </button>
+          )}
         </div>
       )}
 
-      {/* Main scannable row */}
-      <div className="p-3 sm:p-4 flex items-start justify-between gap-3">
-        {/* Left: Route and Departure */}
+      {/* Main Scannable Row */}
+      <div className="p-3.5 sm:p-4 flex items-start justify-between gap-3">
+        {/* Left: Route, Scheduled Time, and Destination */}
         <div className="space-y-1.5 flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <RouteBadge routeNumber={routeNum} size="md" />
-            <span className="text-xs text-transit-textMuted font-medium">
+            <span className="text-xs text-tx-muted font-medium">
               {lang === 'hi'
-                ? `प्रस्थान ${depTime} · ${distKm ? `${distKm} किमी · ` : ''}${stopsCount ? `${stopsCount} स्टॉप` : 'निर्धारित'}`
-                : `Leaves ${depTime} · ${distKm ? `${distKm} km · ` : ''}${stopsCount ? `${stopsCount} stops` : 'scheduled'}`}
+                ? `प्रस्थान ${depTime} · निर्धारित ${distKm ? `· ${distKm} किमी` : ''}`
+                : `Leaves ${depTime} · scheduled ${distKm ? `· ${distKm} km` : ''}`}
             </span>
           </div>
 
-          <div className="text-xs text-transit-text truncate">
+          <div className="text-xs text-tx font-medium truncate">
             {option.route_long_name || `Delhi Bus Route ${routeNum}`}
           </div>
 
-          {/* Crowd Strip signature element */}
-          <div className="pt-0.5">
-            <CrowdStrip
-              category={crowdOrigin}
-              occupancyPercent={option.occupancy_percent || null}
-              size="sm"
-            />
+          {/* Crowding Indicators: Boarding stop + Busiest segment */}
+          <div className="pt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-tx-muted font-medium">
+                {lang === 'hi' ? 'स्टॉप पर:' : 'At stop:'}
+              </span>
+              <CrowdIndicator
+                category={crowdOrigin}
+                occupancyPercent={option.occupancy_percent || null}
+                size="sm"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-tx-muted font-medium">
+                {lang === 'hi' ? 'अधिकतम भीड़:' : 'Busiest part:'}
+              </span>
+              <CrowdIndicator
+                category={peakCrowd}
+                size="sm"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Right: Duration & Expand Toggle */}
+        {/* Right: Duration (Largest Number) & Expand Toggle */}
         <div className="flex flex-col items-end justify-between self-stretch shrink-0">
           <div className="text-right">
             <span className="text-2xl font-bold text-navy tabular-nums leading-none">
               {totalMin}
             </span>
-            <span className="text-xs text-transit-textMuted font-medium ml-1">
+            <span className="text-xs text-tx-muted font-medium ml-1">
               {t('results.min')}
             </span>
           </div>
@@ -120,7 +156,7 @@ export default function TransitRow({
               e.stopPropagation();
               setIsExpanded(!isExpanded);
             }}
-            className="p-1 text-transit-textMuted hover:text-navy hover:bg-transit-bg rounded-[4px] mt-2 transition-colors min-w-[32px] min-h-[32px] flex items-center justify-center"
+            className="p-1.5 text-tx-muted hover:text-navy hover:bg-surface-bg rounded-[var(--radius-control)] mt-2 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal"
             aria-label={isExpanded ? 'Collapse journey details' : 'Expand journey details'}
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -128,17 +164,22 @@ export default function TransitRow({
         </div>
       </div>
 
-      {/* Inline Expander */}
+      {/* Inline Expander (Time Breakdown, Transfers & Route Link) */}
       {isExpanded && (
         <div
-          className="px-3 sm:px-4 pb-3 sm:pb-4 pt-2 border-t border-transit-border space-y-3 bg-transit-bg/40 text-xs"
+          className="px-3.5 sm:px-4 pb-3.5 sm:pb-4 pt-2.5 border-t border-border space-y-3 bg-surface-bg/40 text-xs"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Time breakdown visual bar */}
           <div className="space-y-1">
-            <span className="font-semibold text-navy">
-              {lang === 'hi' ? 'समय का विभाजन' : 'Time breakdown'}
-            </span>
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-navy">
+                {lang === 'hi' ? 'समय का विभाजन' : 'Time breakdown'}
+              </span>
+              <span className="text-tx-muted text-[11px]">
+                {lang === 'hi' ? 'सीधा रूट (0 बदलाव)' : 'Direct route (0 transfers)'}
+              </span>
+            </div>
             <TimeBreakdownBar
               walkMinutes={walkMin}
               waitMinutes={waitMin}
@@ -147,38 +188,35 @@ export default function TransitRow({
           </div>
 
           {/* Confidence and Crowding explanation */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-transit-textMuted pt-1">
-            <div className="p-2 bg-white border border-transit-border rounded-[4px]">
-              <span className="block text-[10px] uppercase font-semibold text-transit-textMuted">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-tx-muted pt-1">
+            <div className="p-2.5 bg-surface border border-border rounded-[var(--radius-control)]">
+              <span className="block text-[10px] uppercase font-semibold text-tx-muted">
                 {lang === 'hi' ? 'डेटा विश्वसनीयता' : 'Data confidence'}
               </span>
-              <span className="text-transit-text font-medium text-xs">
+              <span className="text-tx font-medium text-xs">
                 {getConfidenceText(option.confidence)}
               </span>
             </div>
 
-            <div className="p-2 bg-white border border-transit-border rounded-[4px]">
-              <span className="block text-[10px] uppercase font-semibold text-transit-textMuted">
-                {lang === 'hi' ? 'सवारी के दौरान भीड़' : 'Journey crowd note'}
+            <div className="p-2.5 bg-surface border border-border rounded-[var(--radius-control)]">
+              <span className="block text-[10px] uppercase font-semibold text-tx-muted">
+                {lang === 'hi' ? 'कॉरिडोर दूरी व स्टॉप' : 'Corridor stops'}
               </span>
-              <span className="text-transit-text font-medium text-xs">
-                {option.avg_rci && option.avg_rci > 80
-                  ? (lang === 'hi' ? 'आगे के स्टॉप पर भीड़ बढ़ सकती है' : 'Crowd increases later on this ride')
-                  : (lang === 'hi' ? 'पूरी यात्रा में आरामदायक रहने की संभावना' : 'Likely comfortable throughout ride')}
+              <span className="text-tx font-medium text-xs">
+                {stopsCount ? `${stopsCount} ${lang === 'hi' ? 'स्टॉप' : 'stops'}` : 'Direct'} {distKm ? `· ${distKm} km` : ''}
               </span>
             </div>
           </div>
 
           {/* Action links */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-transit-border/50">
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border/50">
             {onOpenWhyModal && (
               <button
                 type="button"
                 onClick={() => onOpenWhyModal(option)}
                 className="inline-flex items-center gap-1 text-teal hover:underline font-semibold text-xs min-h-[36px]"
               >
-                <Info className="w-3.5 h-3.5" />
-                <span>{lang === 'hi' ? 'यह विकल्प क्यों चुना गया?' : 'Why this option?'}</span>
+                <span>{lang === 'hi' ? 'स्कोरिंग विवरण देखें' : 'View scoring breakdown'}</span>
               </button>
             )}
 

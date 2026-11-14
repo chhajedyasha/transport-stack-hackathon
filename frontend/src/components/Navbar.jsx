@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { MapPin, BarChart2, BookOpen, Globe } from 'lucide-react';
+import AppLogo from './AppLogo';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function Navbar() {
@@ -23,14 +24,9 @@ export default function Navbar() {
       {/* 56px Top Header Bar */}
       <header className="bg-white border-b border-transit-border sticky top-0 z-30 h-14">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-          {/* Brand Wordmark */}
-          <Link to="/" className="flex items-center gap-2 select-none group">
-            <span className="font-extrabold text-xl tracking-tight text-navy">
-              CrowdWise
-            </span>
-            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-navy text-white rounded-[3px] tracking-wider uppercase">
-              Delhi
-            </span>
+          {/* Brand Wordmark & Original App Mark */}
+          <Link to="/" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal rounded" aria-label="CrowdWise Delhi Home">
+            <AppLogo markSize={28} />
           </Link>
 
           {/* Desktop Navigation Links */}

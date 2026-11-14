@@ -38,6 +38,8 @@ export default function LeafletRouteMap({
   className = '',
 }) {
   const totalDistKm = distanceKm || (stops.length > 0 ? stops[stops.length - 1]?.distance_km : null) || 12.0;
+  const isApproximatePath = (!shapePoints || shapePoints.length === 0) && stops && stops.length > 1;
+
   // Compute polyline coordinates from shapePoints or stops sequence
   const polylineCoords = useMemo(() => {
     if (shapePoints && shapePoints.length > 0) {
@@ -195,7 +197,12 @@ export default function LeafletRouteMap({
             <span>Bus Track</span>
           </span>
         </div>
-        <div className="font-semibold text-navy">
+        <div className="flex items-center gap-2 font-semibold text-navy">
+          {isApproximatePath && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-surface border border-border text-tx-muted">
+              Approximate path between stops
+            </span>
+          )}
           <span>
             {stops.length > 0
               ? `${stops.length} stops · ${totalDistKm} km corridor`

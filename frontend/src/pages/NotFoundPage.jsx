@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bus, Home, Search } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export default function NotFoundPage() {
   const { lang, t } = useTranslation();
+
+  useEffect(() => {
+    document.title = '404 Page Not Found | CrowdWise Delhi';
+  }, []);
 
   return (
     <div className="py-16 flex flex-col items-center justify-center text-center px-4">

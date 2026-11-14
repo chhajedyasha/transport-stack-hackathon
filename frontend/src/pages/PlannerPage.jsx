@@ -41,6 +41,11 @@ export default function PlannerPage() {
 
   const [formError, setFormError] = useState('');
 
+  // Real page title per route
+  useEffect(() => {
+    document.title = lang === 'hi' ? 'बस यात्रा योजना | CrowdWise दिल्ली' : 'Plan a Bus Journey | CrowdWise Delhi';
+  }, [lang]);
+
   // Persist preference choice
   const handlePrefChange = (newPref) => {
     setPreference(newPref);

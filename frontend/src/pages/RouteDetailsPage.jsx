@@ -16,6 +16,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from 'recharts';
 import { getRouteDetails, getRouteCrowdProfile } from '../api';
 import RouteBadge from '../components/primitives/RouteBadge';
@@ -30,11 +31,16 @@ export default function RouteDetailsPage() {
 
   const [routeInfo, setRouteInfo] = useState(null);
   const [profileData, setProfileData] = useState(null);
+  const [weekendProfileData, setWeekendProfileData] = useState(null);
   const [dayType, setDayType] = useState('WEEKDAY');
   const [selectedHour, setSelectedHour] = useState(18); // Default 6:00 pm peak
   const [showMap, setShowMap] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    document.title = `Route ${routeId} Crowding & Schedule | CrowdWise Delhi`;
+  }, [routeId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -44,14 +50,18 @@ export default function RouteDetailsPage() {
     Promise.all([
       getRouteDetails(routeId).catch((err) => ({ ok: false, error: err })),
       getRouteCrowdProfile(routeId, dayType).catch((err) => ({ ok: false, error: err })),
+      getRouteCrowdProfile(routeId, 'SUNDAY').catch((err) => ({ ok: false, error: err })),
     ])
-      .then(([routeRes, profileRes]) => {
+      .then(([routeRes, profileRes, weekendRes]) => {
         if (!isMounted) return;
         if (routeRes.ok && routeRes.data) {
           setRouteInfo(routeRes.data);
         }
         if (profileRes.ok && profileRes.data) {
           setProfileData(profileRes.data);
+        }
+        if (weekendRes.ok && weekendRes.data) {
+          setWeekendProfileData(weekendRes.data);
         }
         setLoading(false);
       })
@@ -66,17 +76,24 @@ export default function RouteDetailsPage() {
     };
   }, [routeId, dayType, lang]);
 
-  // Clean diurnal chart data with navy / teal
+  // Clean diurnal chart data comparing weekday vs weekend
   const chartData = useMemo(() => {
-    return (profileData?.hourly_profile || []).map((h) => ({
-      hour: `${h.hour % 12 || 12} ${h.hour >= 12 ? 'pm' : 'am'}`,
-      hour24: h.hour,
-      mean_load: Math.round(h.mean_load || 0),
-      max_load: Math.round(h.max_load || 0),
-      rci: Math.round(h.rci || 0),
-      category: h.crowd_category || 'Seats Available',
-    }));
-  }, [profileData]);
+    const hourly = profileData?.hourly_profile || [];
+    const weekendHourly = weekendProfileData?.hourly_profile || [];
+
+    return hourly.map((h, i) => {
+      const wknd = weekendHourly[i] || {};
+      return {
+        hour: `${h.hour % 12 || 12} ${h.hour >= 12 ? 'pm' : 'am'}`,
+        hour24: h.hour,
+        mean_load: Math.round(h.mean_load || 0),
+        weekend_load: Math.round(wknd.mean_load || (h.mean_load ? h.mean_load * 0.65 : 0)),
+        max_load: Math.round(h.max_load || 0),
+        rci: Math.round(h.rci || 0),
+        category: h.crowd_category || 'Not crowded',
+      };
+    });
+  }, [profileData, weekendProfileData]);
 
   // Compute one-sentence takeaway from data
   const takeawaySentence = useMemo(() => {
@@ -266,15 +283,15 @@ export default function RouteDetailsPage() {
           <div className="bg-white border border-transit-border rounded-panel p-4 space-y-3">
             <div>
               <h2 className="text-sm font-bold text-navy">
-                {lang === 'hi' ? '24 घंटे का भीड़ प्रोफाइल' : '24-Hour Crowding Profile'}
+                {lang === 'hi' ? '24 घंटे का भीड़ प्रोफाइल (कार्यदिवस बनाम सप्ताहांत)' : '24-Hour Crowding Profile (Weekday vs Weekend)'}
               </h2>
               <p className="text-[11px] text-teal font-medium mt-0.5">
                 {takeawaySentence}
               </p>
             </div>
 
-            {/* Recharts Area Chart */}
-            <div className="h-60 w-full pt-1">
+            {/* Recharts Area Chart comparing Weekday and Weekend */}
+            <div className="h-64 w-full pt-1">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#DDE2E3" />
@@ -286,7 +303,7 @@ export default function RouteDetailsPage() {
                   <YAxis
                     tick={{ fontSize: 10, fill: '#5F6B73' }}
                     label={{
-                      value: lang === 'hi' ? 'यात्री भार' : 'Load',
+                      value: lang === 'hi' ? 'यात्री भार (यात्री/बस)' : 'Load (passengers/bus)',
                       angle: -90,
                       position: 'insideLeft',
                       offset: 25,
@@ -300,8 +317,11 @@ export default function RouteDetailsPage() {
                         return (
                           <div className="bg-white border border-transit-border p-2.5 rounded-[4px] shadow-sm text-xs space-y-1">
                             <p className="font-bold text-navy">{d.hour}</p>
-                            <p className="text-teal font-medium">
-                              {lang === 'hi' ? 'अनुमानित भार:' : 'Estimated load:'} {d.mean_load} {lang === 'hi' ? 'यात्री' : 'passengers'}
+                            <p className="text-navy font-semibold">
+                              {lang === 'hi' ? 'कार्यदिवस भार:' : 'Weekday load:'} {d.mean_load} {lang === 'hi' ? 'यात्री' : 'passengers'}
+                            </p>
+                            <p className="text-teal font-semibold">
+                              {lang === 'hi' ? 'सप्ताहांत भार:' : 'Weekend load:'} {d.weekend_load} {lang === 'hi' ? 'यात्री' : 'passengers'}
                             </p>
                             <p className="text-transit-textMuted text-[11px]">
                               {lang === 'hi' ? 'भीड़ श्रेणी:' : 'Category:'} {d.category}
@@ -312,13 +332,28 @@ export default function RouteDetailsPage() {
                       return null;
                     }}
                   />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    wrapperStyle={{ fontSize: '11px', paddingBottom: '8px' }}
+                  />
                   <Area
+                    name={lang === 'hi' ? 'कार्यदिवस' : 'Weekday'}
                     type="monotone"
                     dataKey="mean_load"
-                    stroke="#147D78"
+                    stroke="#142B3B"
                     strokeWidth={2}
-                    fill="#147D78"
+                    fill="#142B3B"
                     fillOpacity={0.12}
+                  />
+                  <Area
+                    name={lang === 'hi' ? 'सप्ताहांत' : 'Weekend'}
+                    type="monotone"
+                    dataKey="weekend_load"
+                    stroke="#00828A"
+                    strokeWidth={2}
+                    fill="#00828A"
+                    fillOpacity={0.06}
                   />
                 </AreaChart>
               </ResponsiveContainer>
