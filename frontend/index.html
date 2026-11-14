@@ -2,19 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>CrowdWise — Delhi Public Bus Journey Planner</title>
+    <meta name="description" content="Plan bus journeys across Delhi with passenger crowdedness estimates based on official ticketing telemetry." />
+    <meta name="theme-color" content="#142B3B" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CrowdWise — Delhi Crowdedness-Aware Bus Journey Planner</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <!-- Inter Font -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- OpenGraph / Social preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CrowdWise — Delhi Bus Journey Planner" />
+    <meta property="og:description" content="Bus crowdedness estimates and journey planning for Delhi commuters." />
+    <meta property="og:site_name" content="CrowdWise Delhi" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="CrowdWise — Delhi Bus Journey Planner" />
+    <meta name="twitter:description" content="Crowdedness-aware Delhi public bus journey planner." />
+
+    <!-- Typography: Inter & Noto Sans Devanagari with font-display: swap -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-brand-canvas text-brand-navy antialiased min-h-screen">
+  <body class="bg-transit-bg text-transit-text antialiased min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-

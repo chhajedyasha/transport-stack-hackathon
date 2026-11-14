@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  Bus,
   Clock,
-  MapPin,
-  Calendar,
   ArrowRight,
-  TrendingUp,
-  AlertCircle,
-  Activity,
-  Layers,
-  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Map as MapIcon,
+  Calendar,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -22,18 +18,21 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { getRouteDetails, getRouteCrowdProfile } from '../api';
-import ProvenanceBadge from '../components/ProvenanceBadge';
-import CrowdBadge from '../components/CrowdBadge';
-import CorridorHeatStrip from '../components/CorridorHeatStrip';
+import RouteBadge from '../components/primitives/RouteBadge';
+import CrowdStrip, { normalizeCrowdCategory } from '../components/primitives/CrowdStrip';
 import LeafletRouteMap from '../components/LeafletRouteMap';
+import SegmentedControl from '../components/primitives/SegmentedControl';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export default function RouteDetailsPage() {
   const { id: routeId = '101UP' } = useParams();
+  const { t, lang } = useTranslation();
 
   const [routeInfo, setRouteInfo] = useState(null);
   const [profileData, setProfileData] = useState(null);
   const [dayType, setDayType] = useState('WEEKDAY');
-  const [selectedDirection, setSelectedDirection] = useState(0);
+  const [selectedHour, setSelectedHour] = useState(18); // Default 6:00 pm peak
+  const [showMap, setShowMap] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -58,63 +57,86 @@ export default function RouteDetailsPage() {
       })
       .catch((err) => {
         if (!isMounted) return;
-        setError(err.message || 'Failed to load route details.');
+        setError(err.message || (lang === 'hi' ? 'रूट विवरण लोड करने में विफल।' : 'Failed to load route details.'));
         setLoading(false);
       });
 
     return () => {
       isMounted = false;
     };
-  }, [routeId, dayType]);
+  }, [routeId, dayType, lang]);
 
-  // Format 24-hour chart data
-  const chartData = (profileData?.hourly_profile || []).map((h) => ({
-    hour: `${h.hour}:00`,
-    hourNum: h.hour,
-    mean_load: Math.round(h.mean_load || 0),
-    max_load: Math.round(h.max_load || 0),
-    rci: Math.round(h.rci || 0),
-    category: h.crowd_category || 'Seats Available',
-  }));
+  // Clean diurnal chart data with navy / teal
+  const chartData = useMemo(() => {
+    return (profileData?.hourly_profile || []).map((h) => ({
+      hour: `${h.hour % 12 || 12} ${h.hour >= 12 ? 'pm' : 'am'}`,
+      hour24: h.hour,
+      mean_load: Math.round(h.mean_load || 0),
+      max_load: Math.round(h.max_load || 0),
+      rci: Math.round(h.rci || 0),
+      category: h.crowd_category || 'Seats Available',
+    }));
+  }, [profileData]);
+
+  // Compute one-sentence takeaway from data
+  const takeawaySentence = useMemo(() => {
+    if (!chartData || chartData.length === 0) {
+      return lang === 'hi'
+        ? 'इस रूट के लिए ऐतिहासिक डेटा सामान्य है।'
+        : 'Historical load data for this route shows typical commuter patterns.';
+    }
+    const maxHourObj = [...chartData].sort((a, b) => b.mean_load - a.mean_load)[0];
+    const peakHour = maxHourObj?.hour || '6 pm';
+    const peakCrowd = maxHourObj?.category || 'Fairly crowded';
+
+    if (lang === 'hi') {
+      return `यह रूट मुख्य रूप से ${peakHour} के आसपास सबसे व्यस्त रहता है (औसत भार: ${maxHourObj.mean_load} यात्री)।`;
+    }
+    return `Peak crowding occurs around ${peakHour} with an estimated average load of ${maxHourObj.mean_load} passengers.`;
+  }, [chartData, lang]);
 
   const stops = routeInfo?.stops || [];
-  const patterns = routeInfo?.patterns || [];
+  const routeNum = routeInfo?.route_short_name || routeId;
+
+  // Segment crowd level computation for chosen hour
+  const getSegmentCrowd = (stopIndex) => {
+    const hourlyPoint = chartData.find((p) => p.hour24 === selectedHour);
+    const rci = hourlyPoint?.rci || 45;
+    if (rci > 80) return 'high';
+    if (rci > 50) return 'moderate';
+    return 'low';
+  };
 
   return (
-    <div className="space-y-6 py-6">
-      {/* Route Header Banner */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-brand-navy text-white flex flex-col items-center justify-center font-black shadow-md">
-              <Bus className="w-5 h-5 text-teal-300" />
-              <span className="text-sm mt-0.5">{routeInfo?.route_short_name || routeId}</span>
-            </div>
+    <div className="py-4 space-y-4">
+      {/* Route Header */}
+      <div className="bg-white border border-transit-border rounded-panel p-4 sm:p-5 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <RouteBadge routeNumber={routeNum} size="lg" />
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-brand-navy">
-                  {routeInfo?.route_long_name || `Bus Route ${routeId}`}
-                </h1>
-                <ProvenanceBadge tier="real_public" label="GTFS Route" size="xs" />
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Agency: {routeInfo?.agency_name || 'DTC Delhi'} • Pattern ID: {routeInfo?.pattern_id || 'PAT_01'} •{' '}
-                {stops.length} stops mapped
+              <h1 className="text-lg sm:text-xl font-bold text-navy">
+                {routeInfo?.route_long_name || `Bus Route ${routeNum}`}
+              </h1>
+              <p className="text-xs text-transit-textMuted mt-0.5">
+                {stops.length} {t('results.stops')} · {routeInfo?.agency_name || 'Delhi DTC'} · {t('app.historicalNote')}
               </p>
             </div>
           </div>
 
-          {/* Quick Route Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 font-semibold">Demo Routes:</span>
-            {['101UP', '101DN', '8UP'].map((r) => (
+          {/* Quick Route Switcher */}
+          <div className="flex items-center gap-1.5 self-start sm:self-auto">
+            <span className="text-[11px] text-transit-textMuted font-medium">
+              {lang === 'hi' ? 'रूट:' : 'Routes:'}
+            </span>
+            {['73UP', '85DOWN', '108AUP'].map((r) => (
               <Link
                 key={r}
                 to={`/route/${r}`}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                className={`px-2 py-1 text-xs font-semibold rounded-[4px] border transition-colors ${
                   routeId === r
-                    ? 'bg-brand-teal text-white shadow-sm'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    ? 'bg-navy text-white border-navy'
+                    : 'bg-transit-bg text-navy border-transit-border hover:bg-white'
                 }`}
               >
                 {r}
@@ -123,177 +145,216 @@ export default function RouteDetailsPage() {
           </div>
         </div>
 
-        {/* Day Type and Direction Selectors */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+        {/* Day Type Selector & Hour Control */}
+        <div className="pt-2 border-t border-transit-border flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-500">Day Type:</span>
-            <div className="flex bg-slate-100 p-1 rounded-xl font-bold">
-              {['WEEKDAY', 'SATURDAY', 'SUNDAY'].map((dt) => (
-                <button
-                  key={dt}
-                  onClick={() => setDayType(dt)}
-                  className={`px-3 py-1 rounded-lg capitalize transition-all ${
-                    dayType === dt
-                      ? 'bg-brand-navy text-white shadow-sm'
-                      : 'text-slate-600 hover:text-brand-navy'
-                  }`}
-                >
-                  {dt.toLowerCase()}
-                </button>
-              ))}
-            </div>
+            <span className="font-semibold text-navy">
+              {lang === 'hi' ? 'दिन:' : 'Day type:'}
+            </span>
+            <SegmentedControl
+              options={[
+                { value: 'WEEKDAY', label: lang === 'hi' ? 'कार्यदिवस' : 'Weekday' },
+                { value: 'SATURDAY', label: lang === 'hi' ? 'शनिवार' : 'Saturday' },
+                { value: 'SUNDAY', label: lang === 'hi' ? 'रविवार' : 'Sunday' },
+              ]}
+              value={dayType}
+              onChange={(val) => setDayType(val)}
+              className="max-w-[300px]"
+            />
           </div>
 
-          <div className="flex items-center gap-2 text-slate-500">
-            <Activity className="w-4 h-4 text-brand-teal" />
-            <span>Peak window: <strong>08:00–10:00 AM &amp; 17:00–20:00 PM</strong></span>
+          {/* Hour Selector */}
+          <div className="flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-teal" />
+            <span className="text-transit-textMuted">
+              {lang === 'hi' ? 'समय चुनें:' : 'Hour:'}
+            </span>
+            <select
+              value={selectedHour}
+              onChange={(e) => setSelectedHour(parseInt(e.target.value, 10))}
+              aria-label="Select inspection hour"
+              className="border border-transit-border rounded-[4px] bg-white px-2 py-1 text-xs text-navy font-semibold focus:outline-none focus:ring-2 focus:ring-teal"
+            >
+              {Array.from({ length: 24 }).map((_, h) => (
+                <option key={h} value={h}>
+                  {h % 12 || 12}:00 {h >= 12 ? 'pm' : 'am'}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
 
-      {loading ? (
-        <div className="bg-white rounded-2xl p-12 text-center space-y-4 border border-slate-200">
-          <div className="w-10 h-10 border-4 border-brand-teal border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-sm font-semibold text-slate-600">Loading route corridor telemetry...</p>
-        </div>
-      ) : error ? (
-        <div className="bg-white rounded-2xl p-8 text-center text-red-600 border border-red-200">
-          <p className="font-bold">{error}</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: Heat Strip & 24h Chart (7 cols) */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* 8-Zone Corridor Heat Strip */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-base text-brand-navy">8-Zone Corridor Heat Distribution</h3>
-                  <p className="text-xs text-slate-500">Aggregated passenger loads along stop stretches</p>
-                </div>
-                <ProvenanceBadge tier="estimated" label="ML Model" size="xs" />
-              </div>
-
-              <CorridorHeatStrip zones={profileData?.zone_profiles || []} />
+      {/* Main Grid: Vertical Timeline & Diurnal Chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        {/* Left Column: Vertical Stop Timeline with Crowd Colors (6 cols) */}
+        <div className="lg:col-span-6 bg-white border border-transit-border rounded-panel p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-transit-border pb-2.5">
+            <div>
+              <h2 className="text-sm font-bold text-navy">
+                {lang === 'hi' ? 'स्टॉप समयरेखा और भीड़ स्तर' : 'Stop Timeline & Crowding'}
+              </h2>
+              <p className="text-[11px] text-transit-textMuted">
+                {selectedHour % 12 || 12}:00 {selectedHour >= 12 ? 'pm' : 'am'} ({dayType.toLowerCase()})
+              </p>
             </div>
+            <CrowdStrip category={getSegmentCrowd(0)} size="sm" />
+          </div>
 
-            {/* 24-Hour Diurnal Crowding Profile Chart */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-base text-brand-navy">24-Hour Crowding Diurnal Profile</h3>
-                  <p className="text-xs text-slate-500">
-                    Predicted passenger load across hours ({dayType.toLowerCase()})
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-teal-500"></span> Mean Load
-                  </span>
-                </div>
-              </div>
+          {/* Timeline List */}
+          <div className="space-y-0 max-h-[520px] overflow-y-auto pr-2">
+            {stops.map((stop, idx) => {
+              const segCrowd = getSegmentCrowd(idx);
+              const isFirst = idx === 0;
+              const isLast = idx === stops.length - 1;
 
-              <div className="h-64 w-full">
-                {chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="loadGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#0FA3A3" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="#0FA3A3" stopOpacity={0.0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                      <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#64748B' }} interval={2} />
-                      <YAxis tick={{ fontSize: 10, fill: '#64748B' }} />
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const d = payload[0].payload;
-                            return (
-                              <div className="bg-slate-900 text-white p-3 rounded-xl text-xs space-y-1 shadow-xl">
-                                <p className="font-bold">{d.hour} ({d.category})</p>
-                                <p className="text-teal-300">Mean Load: {d.mean_load} passengers</p>
-                                <p className="text-slate-300">Peak Load: {d.max_load}</p>
-                                <p className="text-amber-300">RCI: {d.rci} / 100</p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="mean_load"
-                        stroke="#0FA3A3"
-                        strokeWidth={2.5}
-                        fillOpacity={1}
-                        fill="url(#loadGradient)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                    No hourly profile points recorded.
+              const crowdBarColor =
+                segCrowd === 'high'
+                  ? 'bg-crowd-high'
+                  : segCrowd === 'moderate'
+                  ? 'bg-crowd-mod'
+                  : 'bg-crowd-low';
+
+              return (
+                <div key={stop.stop_id || idx} className="relative flex items-start gap-3">
+                  {/* Vertical Line & Dot */}
+                  <div className="flex flex-col items-center self-stretch">
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full border-2 border-white shrink-0 mt-1 z-10 ${
+                        isFirst
+                          ? 'bg-teal'
+                          : isLast
+                          ? 'bg-navy'
+                          : 'bg-white border-navy ring-1 ring-navy'
+                      }`}
+                    />
+                    {!isLast && (
+                      <span className={`w-1 flex-1 my-0.5 rounded-full ${crowdBarColor}`} />
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
 
-            {/* Scheduled Stops Sequence */}
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-              <h3 className="font-bold text-base text-brand-navy">Scheduled Stops Sequence ({stops.length} stops)</h3>
-              <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 pr-2">
-                {stops.map((s, idx) => {
-                  const zoneIdx = Math.min(7, Math.floor((8 * idx) / Math.max(stops.length, 1)));
-                  return (
-                    <div key={s.stop_id || idx} className="py-2.5 flex items-center justify-between text-xs hover:bg-slate-50 px-2 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-[10px]">
-                          {idx + 1}
-                        </span>
-                        <div>
-                          <p className="font-bold text-slate-800">{s.stop_name}</p>
-                          <p className="text-[10px] text-slate-400 font-mono">{s.stop_id}</p>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                        Zone {zoneIdx}
+                  {/* Stop Name & Crowd Chip */}
+                  <div className="pb-4 min-w-0 flex-1 flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="text-xs font-semibold text-navy truncate block">
+                        {stop.stop_name || `Stop #${idx + 1}`}
+                      </span>
+                      <span className="text-[10px] text-transit-textMuted font-mono">
+                        {stop.stop_id}
                       </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
 
-          {/* Right Column: Interactive Map (5 cols) */}
-          <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
-            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-slate-700">Route Geometry &amp; Alignment</span>
-                <span className="text-slate-400 font-mono">{stops.length} Stops</span>
-              </div>
-
-              <LeafletRouteMap
-                stops={stops}
-                shapePoints={routeInfo?.shape_points || []}
-                height="450px"
-              />
-
-              <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100">
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> First Stop
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Terminal Stop
-                </span>
-              </div>
-            </div>
+                    {!isLast && (
+                      <span className="text-[11px] text-transit-textMuted shrink-0">
+                        {segCrowd === 'high'
+                          ? (lang === 'hi' ? 'ज़्यादा भीड़' : 'Very crowded')
+                          : segCrowd === 'moderate'
+                          ? (lang === 'hi' ? 'मध्यम भीड़' : 'Fairly crowded')
+                          : (lang === 'hi' ? 'कम भीड़' : 'Not crowded')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      )}
+
+        {/* Right Column: Diurnal Crowding Profile Chart & Map (6 cols) */}
+        <div className="lg:col-span-6 space-y-4">
+          {/* Diurnal Chart Card */}
+          <div className="bg-white border border-transit-border rounded-panel p-4 space-y-3">
+            <div>
+              <h2 className="text-sm font-bold text-navy">
+                {lang === 'hi' ? '24 घंटे का भीड़ प्रोफाइल' : '24-Hour Crowding Profile'}
+              </h2>
+              <p className="text-[11px] text-teal font-medium mt-0.5">
+                {takeawaySentence}
+              </p>
+            </div>
+
+            {/* Recharts Area Chart */}
+            <div className="h-60 w-full pt-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#DDE2E3" />
+                  <XAxis
+                    dataKey="hour"
+                    tick={{ fontSize: 10, fill: '#5F6B73' }}
+                    interval={3}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: '#5F6B73' }}
+                    label={{
+                      value: lang === 'hi' ? 'यात्री भार' : 'Load',
+                      angle: -90,
+                      position: 'insideLeft',
+                      offset: 25,
+                      style: { fontSize: 10, fill: '#5F6B73' },
+                    }}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const d = payload[0].payload;
+                        return (
+                          <div className="bg-white border border-transit-border p-2.5 rounded-[4px] shadow-sm text-xs space-y-1">
+                            <p className="font-bold text-navy">{d.hour}</p>
+                            <p className="text-teal font-medium">
+                              {lang === 'hi' ? 'अनुमानित भार:' : 'Estimated load:'} {d.mean_load} {lang === 'hi' ? 'यात्री' : 'passengers'}
+                            </p>
+                            <p className="text-transit-textMuted text-[11px]">
+                              {lang === 'hi' ? 'भीड़ श्रेणी:' : 'Category:'} {d.category}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="mean_load"
+                    stroke="#147D78"
+                    strokeWidth={2}
+                    fill="#147D78"
+                    fillOpacity={0.12}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Map Preview (Collapsible on Mobile) */}
+          <div className="bg-white border border-transit-border rounded-panel p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-navy flex items-center gap-1.5">
+                <MapIcon className="w-3.5 h-3.5 text-teal" />
+                {lang === 'hi' ? 'रूट मानचित्र' : 'Route Map'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowMap(!showMap)}
+                className="text-xs text-teal font-semibold hover:underline"
+              >
+                {showMap
+                  ? (lang === 'hi' ? 'मानचित्र छुपाएं' : 'Hide map')
+                  : (lang === 'hi' ? 'मानचित्र दिखाएं' : 'Show map')}
+              </button>
+            </div>
+
+            {showMap && (
+              <div className="pt-2 animate-fade-in">
+                <LeafletRouteMap
+                  stops={stops}
+                  shapePoints={routeInfo?.shape_points || []}
+                  height="260px"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
-

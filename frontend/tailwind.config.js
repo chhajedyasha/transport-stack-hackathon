@@ -5,22 +5,66 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      'xs': '360px',
+      'sm': '600px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1440px',
+    },
     extend: {
       colors: {
-        brand: {
-          navy: "#0B1F3A",
-          teal: "#0FA3A3",
-          tealHover: "#0D8B8B",
-          canvas: "#F7FAFC",
+        navy: {
+          DEFAULT: "var(--color-navy)",
+          dark: "var(--color-navy-dark)",
+        },
+        teal: {
+          DEFAULT: "var(--color-teal)",
+          hover: "var(--color-teal-hover)",
+          tint: "var(--color-teal-tint)",
+        },
+        surface: {
+          DEFAULT: "var(--color-surface)",
+          bg: "var(--color-background)",
+        },
+        border: {
+          DEFAULT: "var(--color-border)",
+          subtle: "var(--color-border-subtle)",
+        },
+        tx: {
+          DEFAULT: "var(--color-text)",
+          muted: "var(--color-text-muted)",
+          inverse: "var(--color-text-inverse)",
         },
         crowd: {
-          green: "#22A06B",
-          amber: "#F5A623",
-          red: "#E5484D",
+          low: "var(--color-crowd-low)",
+          'low-tint': "var(--color-crowd-low-tint)",
+          mod: "var(--color-crowd-mod)",
+          'mod-text': "var(--color-crowd-mod-text)",
+          'mod-tint': "var(--color-crowd-mod-tint)",
+          high: "var(--color-crowd-high)",
+          'high-tint': "var(--color-crowd-high-tint)",
+          unknown: "var(--color-crowd-unknown)",
+          'unknown-tint': "var(--color-crowd-unknown-tint)",
         }
+      },
+      borderRadius: {
+        control: "var(--radius-control)",
+        panel: "var(--radius-panel)",
+        badge: "var(--radius-badge)",
+      },
+      boxShadow: {
+        overlay: "var(--shadow-overlay)",
+      },
+      transitionDuration: {
+        fast: "var(--duration-fast)",
+        medium: "var(--duration-medium)",
+        slow: "var(--duration-slow)",
+      },
+      transitionTimingFunction: {
+        transit: "var(--ease-transit)",
       }
     },
   },
   plugins: [],
 }
-

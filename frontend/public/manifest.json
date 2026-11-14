@@ -1,0 +1,16 @@
+{
+  "name": "CrowdWise — Delhi Bus Journey Planner",
+  "short_name": "CrowdWise",
+  "description": "Crowdedness-aware Delhi public bus journey planner based on official ticketing and GTFS timetables.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F8F6",
+  "theme_color": "#142B3B",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

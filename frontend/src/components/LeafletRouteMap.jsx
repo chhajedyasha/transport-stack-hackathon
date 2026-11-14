@@ -2,15 +2,15 @@ import React, { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Polyline, CircleMarker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Helper component to auto-fit bounds
+// Auto-fit bounds component
 function ChangeView({ bounds }) {
   const map = useMap();
   useEffect(() => {
     if (bounds && bounds.length > 0) {
       try {
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
       } catch (e) {
-        console.warn('Could not fit map bounds:', e);
+        // Ignore zoom errors when container is rendering
       }
     }
   }, [bounds, map]);
@@ -23,6 +23,7 @@ export default function LeafletRouteMap({
   highlightOrigin = null,
   highlightDest = null,
   height = '360px',
+  className = '',
 }) {
   // Compute positions
   const polylineCoords = useMemo(() => {
@@ -41,15 +42,18 @@ export default function LeafletRouteMap({
       return stops.map((s) => [s.stop_lat || s.lat, s.stop_lon || s.lon]).filter((c) => c[0] && c[1]);
     }
     return [
-      [28.5, 77.1],
-      [28.7, 77.3],
+      [28.52, 77.10],
+      [28.72, 77.32],
     ];
   }, [polylineCoords, stops]);
 
-  const defaultCenter = [28.6139, 77.2090]; // Delhi center
+  const defaultCenter = [28.6139, 77.2090]; // Central Secretariat / CP
 
   return (
-    <div style={{ height }} className="w-full rounded-2xl overflow-hidden border border-slate-200 shadow-inner relative">
+    <div
+      style={{ height }}
+      className={`w-full rounded-panel overflow-hidden border border-transit-border relative bg-transit-bg ${className}`}
+    >
       <MapContainer
         center={defaultCenter}
         zoom={12}
@@ -63,15 +67,21 @@ export default function LeafletRouteMap({
 
         {bounds.length > 0 && <ChangeView bounds={bounds} />}
 
-        {/* Route Polyline */}
+        {/* Selected journey: 5px navy casing with a 3px teal line */}
         {polylineCoords.length > 1 && (
-          <Polyline
-            positions={polylineCoords}
-            pathOptions={{ color: '#0FA3A3', weight: 5, opacity: 0.85, lineJoin: 'round' }}
-          />
+          <>
+            <Polyline
+              positions={polylineCoords}
+              pathOptions={{ color: '#142B3B', weight: 6, opacity: 0.9, lineJoin: 'round' }}
+            />
+            <Polyline
+              positions={polylineCoords}
+              pathOptions={{ color: '#147D78', weight: 3.5, opacity: 1, lineJoin: 'round' }}
+            />
+          </>
         )}
 
-        {/* Stops Markers */}
+        {/* Stops as small white circles with a navy stroke */}
         {stops.map((stop, idx) => {
           const lat = stop.stop_lat || stop.lat;
           const lon = stop.stop_lon || stop.lon;
@@ -80,18 +90,21 @@ export default function LeafletRouteMap({
           const isOrigin = highlightOrigin === stop.stop_id || idx === 0;
           const isDest = highlightDest === stop.stop_id || idx === stops.length - 1;
 
-          let color = '#4A5568';
           let radius = 4;
-          let fillColor = '#FFFFFF';
+          let color = '#142B3B'; // navy stroke
+          let fillColor = '#FFFFFF'; // white fill
+          let weight = 2;
 
           if (isOrigin) {
-            color = '#22A06B';
-            fillColor = '#22A06B';
-            radius = 7;
+            radius = 6;
+            color = '#142B3B';
+            fillColor = '#147D78'; // Teal origin
+            weight = 2.5;
           } else if (isDest) {
-            color = '#E5484D';
-            fillColor = '#E5484D';
-            radius = 7;
+            radius = 6;
+            color = '#142B3B';
+            fillColor = '#142B3B'; // Navy destination
+            weight = 2.5;
           }
 
           return (
@@ -99,15 +112,26 @@ export default function LeafletRouteMap({
               key={stop.stop_id || idx}
               center={[lat, lon]}
               radius={radius}
-              pathOptions={{ color, fillColor, fillOpacity: 0.9, weight: 2 }}
+              pathOptions={{
+                color,
+                fillColor,
+                fillOpacity: 1,
+                weight,
+              }}
             >
-              <Popup>
-                <div className="text-xs space-y-1">
-                  <p className="font-bold text-slate-800">{stop.stop_name || `Stop ${idx + 1}`}</p>
-                  <p className="text-[11px] text-slate-500 font-mono">ID: {stop.stop_id}</p>
-                  {isOrigin && <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Origin</span>}
-                  {isDest && <span className="inline-block px-1.5 py-0.5 rounded bg-red-100 text-red-800 font-bold text-[10px]">Destination</span>}
-                </div>
+              <Popup className="text-xs font-sans">
+                <div className="font-semibold text-navy">{stop.stop_name || `Stop #${idx + 1}`}</div>
+                {stop.stop_id && (
+                  <div className="text-[10px] text-transit-textMuted font-mono">
+                    ID: {stop.stop_id}
+                  </div>
+                )}
+                {isOrigin && (
+                  <div className="text-[10px] font-bold text-teal mt-0.5">Origin Stop</div>
+                )}
+                {isDest && (
+                  <div className="text-[10px] font-bold text-navy mt-0.5">Destination Stop</div>
+                )}
               </Popup>
             </CircleMarker>
           );
@@ -116,4 +140,3 @@ export default function LeafletRouteMap({
     </div>
   );
 }
-

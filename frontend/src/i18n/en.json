@@ -1,0 +1,121 @@
+{
+  "app": {
+    "name": "CrowdWise",
+    "tagline": "Delhi bus journey planner",
+    "dataLine": "Based on 2.56M official October 2026 ticketing records",
+    "historicalNote": "Based on past ticket data for this time of day",
+    "language": "Language",
+    "en": "English",
+    "hi": "हिन्दी"
+  },
+  "nav": {
+    "plan": "Plan journey",
+    "analytics": "Analytics",
+    "about": "Data & method"
+  },
+  "planner": {
+    "title": "Plan a bus journey",
+    "fromLabel": "From",
+    "fromPlaceholder": "Enter origin stop or landmark",
+    "toLabel": "To",
+    "toPlaceholder": "Enter destination stop or landmark",
+    "swap": "Swap origin and destination",
+    "departure": "Departure",
+    "leaveNow": "Leave now",
+    "leaveAt": "Leave at",
+    "timeLabel": "Time",
+    "preference": "Priority",
+    "balanced": "Balanced",
+    "fastest": "Fastest",
+    "leastCrowded": "Least crowded",
+    "search": "Search routes",
+    "recent": "Recent searches",
+    "nearby": "Nearby stops",
+    "useLocation": "Use my location",
+    "locationDenied": "Location permission was denied. Type your stop above.",
+    "locationUnavailable": "Location unavailable. Please search by stop name.",
+    "showcaseButton": "Try corridor: Anand Vihar → Connaught Place (6:00 pm)",
+    "noStopsFound": "No stops found matching your search.",
+    "clearRecent": "Clear recent"
+  },
+  "results": {
+    "title": "Journey options",
+    "optionsFound": "{{count}} options found",
+    "leaves": "Leaves",
+    "scheduled": "scheduled",
+    "min": "min",
+    "recommendedFor": "Recommended for {{pref}}",
+    "whyRecommended": "Why this option",
+    "rideDetails": "Ride details",
+    "stops": "stops",
+    "distance": "km",
+    "walk": "walk",
+    "wait": "wait",
+    "ride": "ride",
+    "busiestPart": "Busiest part of ride",
+    "atYourStop": "At your stop",
+    "dataConfidence": "Data confidence",
+    "transfers": "Direct route (no transfers)",
+    "compare": "Compare top 3",
+    "closeCompare": "Close comparison",
+    "noRoutes": "No direct bus route found between these stops.",
+    "searchWider": "Search wider (walk up to 800 m)",
+    "retry": "Try again",
+    "back": "Back to planner"
+  },
+  "crowd": {
+    "low": "Not crowded",
+    "moderate": "Fairly crowded",
+    "high": "Very crowded",
+    "unknown": "Not enough data"
+  },
+  "confidence": {
+    "high": "Based on a lot of data",
+    "medium": "Based on some data",
+    "low": "Based on little data"
+  },
+  "routeDetails": {
+    "title": "Route details",
+    "direction": "Direction",
+    "timeline": "Stop timeline and crowd level",
+    "hour": "Hour of day",
+    "dayType": "Day type",
+    "weekday": "Weekday",
+    "saturday": "Saturday",
+    "sunday": "Sunday",
+    "hourlyChart": "Crowd level by hour of day",
+    "hourlyTakeaway": "Route {{route}} peaks at {{peakHour}} with {{peakLabel}} conditions."
+  },
+  "analytics": {
+    "title": "Network analytics",
+    "scope": "Aggregated patterns from official Delhi Transport Stack ticketing records",
+    "routesCovered": "Routes covered",
+    "recordsProcessed": "Tickets processed",
+    "dateRange": "Date range",
+    "lastUpdate": "Model status",
+    "q1": "When is the network busiest?",
+    "q2": "Which routes are most crowded at peak?",
+    "q3": "How are crowd levels distributed across the network?",
+    "route": "Route",
+    "peakCrowd": "Peak crowd",
+    "lowShare": "Not crowded",
+    "modShare": "Fairly crowded",
+    "highShare": "Very crowded"
+  },
+  "about": {
+    "title": "Data sources and methodology",
+    "subtitle": "How CrowdWise estimates bus crowdedness without GPS tracking",
+    "overview": "Overview",
+    "pipeline": "Data pipeline",
+    "dataTiers": "Data tiers and sources",
+    "model": "Prediction model",
+    "limitations": "Known limitations and assumptions",
+    "privacy": "Privacy and data protection",
+    "credits": "Attributions and credits"
+  },
+  "errors": {
+    "network": "We couldn't load results. Check your connection and try again.",
+    "notFound": "Page not found.",
+    "generic": "Something went wrong. Please refresh."
+  }
+}

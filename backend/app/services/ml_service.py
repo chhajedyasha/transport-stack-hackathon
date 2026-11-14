@@ -14,9 +14,13 @@ from app.ml.evaluate import RCICalibrator
 logger = logging.getLogger(__name__)
 
 # Search paths for ML artifacts
-MODELS_DIR = Path(__file__).parent.parent.parent / "models"
-if not MODELS_DIR.exists():
-    MODELS_DIR = Path("models")
+_CANDIDATE_PATHS = [
+    Path(__file__).resolve().parent.parent.parent.parent / "models",
+    Path(__file__).resolve().parent.parent.parent / "models",
+    Path("models"),
+    Path("../models"),
+]
+MODELS_DIR = next((p for p in _CANDIDATE_PATHS if (p / "random_forest_regressor.pkl").exists()), _CANDIDATE_PATHS[0])
 
 
 class MLService:

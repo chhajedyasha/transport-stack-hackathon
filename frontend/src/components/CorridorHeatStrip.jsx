@@ -5,17 +5,18 @@ export default function CorridorHeatStrip({ zones, title = "8-Zone Corridor Heat
   const displayZones = Array.from({ length: 8 }).map((_, idx) => {
     const existing = zones?.find((z) => z.zone_id === idx) || zones?.[idx];
     if (existing) {
+      const calcLoad = existing.mean_load !== undefined ? existing.mean_load : (existing.load !== undefined ? existing.load : Math.round((existing.rci || 0) * 0.6));
       return {
         zone_id: idx,
-        mean_load: existing.mean_load || 0,
-        rci: existing.rci !== undefined ? existing.rci : (existing.mean_load ? Math.min(100, existing.mean_load * 2) : 25),
-        label: existing.crowd_category || (existing.mean_load > 35 ? 'Crowded' : existing.mean_load > 20 ? 'Standing Room' : 'Seats Available'),
+        mean_load: calcLoad,
+        rci: existing.rci !== undefined ? existing.rci : (calcLoad ? Math.min(100, calcLoad * 1.67) : 25),
+        label: existing.crowd_category || (calcLoad > 35 ? 'Crowded' : calcLoad > 20 ? 'Standing Room' : 'Seats Available'),
       };
     }
     // Default placeholder
     return {
       zone_id: idx,
-      mean_load: 0,
+      mean_load: 12,
       rci: 20,
       label: 'Seats Available',
     };

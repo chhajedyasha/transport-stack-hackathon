@@ -26,8 +26,17 @@ def create_app(config_class=Config) -> Flask:
     from app.models.demand import Base as DemandBase
     with app.app_context():
         try:
-            TransitBase.metadata.create_all(db.engine)
-            DemandBase.metadata.create_all(db.engine)
+            db_uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+            is_existing_db = False
+            if "sqlite:///" in db_uri:
+                db_path = db_uri.replace("sqlite:///", "")
+                if os.path.exists(db_path) and os.path.getsize(db_path) > 1024 * 1024:
+                    is_existing_db = True
+
+            if not is_existing_db:
+                TransitBase.metadata.create_all(db.engine)
+                DemandBase.metadata.create_all(db.engine)
+
             from sqlalchemy import text
             mode_row = db.session.execute(text("SELECT value FROM sys_runtime_metadata WHERE key = 'data_mode' LIMIT 1")).scalar()
             if mode_row:

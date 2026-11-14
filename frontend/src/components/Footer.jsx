@@ -1,44 +1,64 @@
 import React from 'react';
-import { ShieldCheck, ExternalLink, Heart } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export default function Footer() {
+  const { lang, t } = useTranslation();
+
   return (
-    <footer className="bg-white border-t border-slate-200 mt-16 text-slate-600 text-xs py-8">
+    <footer className="bg-white border-t border-transit-border mt-12 text-transit-textMuted text-xs py-6 pb-20 sm:pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="space-y-1 text-center md:text-left">
-            <p className="font-semibold text-brand-navy">
-              CrowdWise — Delhi Transport Stack Hackathon 2026 (Problem 2)
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="space-y-1">
+            <p className="font-semibold text-navy">
+              CrowdWise — Delhi Public Bus Journey Planner
             </p>
-            <p className="text-slate-500">
-              Crowdedness-aware bus journey planning with historical ETM ticket inference & machine learning.
+            <p className="text-transit-textMuted text-xs">
+              {lang === 'hi'
+                ? 'ऐतिहासिक टिकट डेटा के आधार पर बस भीड़ का अनुमान। खोज और स्थान उपकरण में सुरक्षित रहते हैं।'
+                : 'Historical bus crowdedness estimation. Searches and location stay on your device.'}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-slate-500">
+          <div className="flex flex-wrap items-center gap-3 text-transit-textMuted text-xs">
+            <a
+              href="https://www.openstreetmap.org/copyright"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-teal underline"
+            >
+              OpenStreetMap
+            </a>
+            <span>·</span>
             <a
               href="https://delhi.transportstack.in"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 hover:text-brand-teal transition-colors"
+              className="hover:text-teal underline inline-flex items-center gap-1"
             >
-              Delhi Transport Stack <ExternalLink className="w-3 h-3" />
+              Delhi GTFS <ExternalLink className="w-3 h-3" />
             </a>
-            <span>•</span>
-            <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              <ShieldCheck className="w-3.5 h-3.5" /> DPDP Act 2023 Compliant
-            </span>
+            <span>·</span>
+            <a
+              href="https://github.com/rajnyx/transport-stack-hackathon"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-teal underline inline-flex items-center gap-1"
+            >
+              GitHub <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center text-slate-400 gap-2">
-          <p>© 2026 Team CrowdWise. Open source Apache 2.0.</p>
-          <p className="flex items-center gap-1">
-            Built with 100% test coverage & reproducible pipelines
+        <div className="pt-3 border-t border-transit-border flex flex-col sm:flex-row justify-between items-center text-transit-textMuted text-[11px] gap-2">
+          <p>© 2026 CrowdWise. Built for Delhi commuters.</p>
+          <p>
+            {lang === 'hi'
+              ? 'समय सारणी डेटा दिल्ली परिवहन सेवा पर आधारित है'
+              : 'Timetable data based on Delhi Public Transport specifications'}
           </p>
         </div>
       </div>
     </footer>
   );
 }
-

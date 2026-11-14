@@ -1,0 +1,75 @@
+/**
+ * CrowdWise Design System Tokens
+ * Strictly defined CSS variables mapped to Tailwind and public transit accessibility specs.
+ */
+
+:root {
+  /* Core Brand Colors */
+  --color-navy: #142B3B;
+  --color-navy-dark: #0E1F2B;
+  --color-teal: #147D78;
+  --color-teal-hover: #106662;
+  --color-teal-tint: #E8F4F3;
+
+  /* Surfaces & Backgrounds */
+  --color-background: #F7F8F6;
+  --color-surface: #FFFFFF;
+  --color-border: #DDE2E3;
+  --color-border-subtle: #EDF0F0;
+
+  /* Typography / Text Colors (Contrast >= 7:1 for key text) */
+  --color-text: #202A32;
+  --color-text-muted: #5F6B73;
+  --color-text-inverse: #FFFFFF;
+
+  /* Crowdedness Status Colors */
+  --color-crowd-low: #1B7F52;
+  --color-crowd-low-tint: #EAF6EE;
+  --color-crowd-mod: #F2B01E;
+  --color-crowd-mod-text: #8A5A00;
+  --color-crowd-mod-tint: #FEF7E8;
+  --color-crowd-high: #C8372D;
+  --color-crowd-high-tint: #FBEBE9;
+  --color-crowd-unknown: #8A949B;
+  --color-crowd-unknown-tint: #F1F3F4;
+
+  /* Focus Ring */
+  --color-focus-ring: #147D78;
+
+  /* Radius Tokens (Strictly <= 8px; fully round only for badges/chips) */
+  --radius-control: 4px;
+  --radius-panel: 6px;
+  --radius-badge: 4px;
+  --radius-chip: 9999px;
+
+  /* Elevation / Shadows (No shadow by default; 1 subtle elevation for popovers/sheets) */
+  --shadow-overlay: 0 4px 16px rgba(20, 43, 59, 0.08);
+
+  /* Motion Tokens (Animate ONLY transform & opacity) */
+  --duration-fast: 120ms;
+  --duration-medium: 200ms;
+  --duration-slow: 280ms;
+  --ease-transit: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Tabular Numerals Utility */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  -webkit-font-feature-settings: "tnum";
+  font-feature-settings: "tnum";
+}
+
+/* Devanagari Hindi Text Line-height Adjustment */
+.lang-hi {
+  line-height: 1.65;
+}

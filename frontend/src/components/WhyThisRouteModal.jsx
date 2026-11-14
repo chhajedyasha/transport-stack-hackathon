@@ -1,115 +1,103 @@
 import React from 'react';
-import { X, Sparkles, Clock, Users, ArrowRight, ShieldCheck } from 'lucide-react';
-import CrowdBadge from './CrowdBadge';
+import { X } from 'lucide-react';
+import RouteBadge from './primitives/RouteBadge';
+import CrowdStrip from './primitives/CrowdStrip';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export default function WhyThisRouteModal({ option, fastestOption, preference = 'balanced', onClose }) {
+  const { lang } = useTranslation();
   if (!option) return null;
 
   const tFastest = fastestOption?.total_duration_minutes || option.total_duration_minutes;
   const tOption = option.total_duration_minutes;
-  const timePenalty = Math.max(0, (tOption - tFastest) / Math.max(tFastest, 10));
-  const crowdPenalty = (option.avg_rci || 0) / 100.0;
-
-  let wTime = 0.5;
-  let wCrowd = 0.5;
-  if (preference === 'fastest') {
-    wTime = 1.0;
-    wCrowd = 0.0;
-  } else if (preference === 'least_crowded') {
-    wTime = 0.2;
-    wCrowd = 0.8;
-  }
-
-  const finalScore = (wTime * timePenalty + wCrowd * crowdPenalty).toFixed(3);
+  const timeDiff = tOption - tFastest;
+  const routeNum = option.route_short_name || option.route_id;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-5 border border-slate-200">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/40"
+    >
+      <div className="bg-white rounded-panel max-w-md w-full p-5 space-y-4 border border-transit-border">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-transit-border pb-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-teal-50 text-brand-teal">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg text-brand-navy">Why this route was ranked</h3>
-              <p className="text-xs text-slate-500">Transparent Multi-Objective Recommendation Engine</p>
-            </div>
+            <RouteBadge routeNumber={routeNum} size="md" />
+            <h3 className="font-bold text-sm text-navy">
+              {lang === 'hi' ? 'यह विकल्प क्यों अनुशंसित है?' : 'Why this option was recommended'}
+            </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+            className="p-1 text-transit-textMuted hover:text-navy rounded-[4px] hover:bg-transit-bg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+            aria-label="Close dialog"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="space-y-4 text-sm text-slate-700">
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <div>
-              <p className="text-xs text-slate-500">Route Candidate</p>
-              <p className="font-bold text-base text-brand-navy">Bus {option.route_short_name || option.route_id}</p>
-            </div>
-            <CrowdBadge
-              label={option.crowd_category}
-              rci={option.avg_rci}
-              confidence={option.confidence}
-              size="sm"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Mathematical Optimization Formula</h4>
-            <div className="p-3 rounded-lg bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto">
-              Score = w<sub>time</sub> · ΔT<sub>norm</sub> + w<sub>crowd</sub> · RCI<sub>norm</sub>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3 rounded-lg bg-blue-50/60 border border-blue-200 space-y-1">
-              <span className="flex items-center gap-1 font-semibold text-blue-900">
-                <Clock className="w-3.5 h-3.5" /> Time Weight ({wTime})
+        {/* Content */}
+        <div className="space-y-3 text-xs text-transit-text">
+          <div className="p-3 bg-transit-bg border border-transit-border rounded-[4px] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-navy">
+                {lang === 'hi' ? 'चयनित प्राथमिकता' : 'Selected priority'}
               </span>
-              <p className="text-slate-600">Travel time: <strong>{tOption} min</strong></p>
-              <p className="text-slate-500">Fastest baseline: {tFastest} min</p>
-              <p className="text-blue-700 font-mono">ΔT<sub>norm</sub> = {timePenalty.toFixed(2)}</p>
-            </div>
-
-            <div className="p-3 rounded-lg bg-amber-50/60 border border-amber-200 space-y-1">
-              <span className="flex items-center gap-1 font-semibold text-amber-900">
-                <Users className="w-3.5 h-3.5" /> Crowd Weight ({wCrowd})
+              <span className="font-bold text-teal capitalize">
+                {preference.replace('_', ' ')}
               </span>
-              <p className="text-slate-600">Avg RCI: <strong>{Math.round(option.avg_rci || 0)} / 100</strong></p>
-              <p className="text-slate-500">Seats comfort rank</p>
-              <p className="text-amber-700 font-mono">RCI<sub>norm</sub> = {crowdPenalty.toFixed(2)}</p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-transit-textMuted">
+                {lang === 'hi' ? 'यात्रा समय' : 'Travel time'}
+              </span>
+              <span className="font-semibold text-navy tabular-nums">
+                {tOption} min {timeDiff > 0 ? `(+${timeDiff} min vs fastest)` : '(fastest option)'}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-transit-textMuted">
+                {lang === 'hi' ? 'भीड़ स्तर' : 'Crowd estimate'}
+              </span>
+              <CrowdStrip category={option.crowd_category} size="sm" />
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-teal-50 border border-teal-200 text-xs text-teal-900 space-y-1">
-            <p className="font-semibold flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-brand-teal" />
-              Detour Safeguard & Recommendation
-            </p>
-            <p className="text-slate-600">
-              Under <strong>{preference}</strong> mode, this option scored <code className="font-bold text-teal-900">{finalScore}</code>.
-              {tOption <= 1.5 * tFastest + 10 ? (
-                <span> It satisfies the maximum allowed detour threshold of 1.5× + 10 minutes.</span>
-              ) : (
-                <span className="text-amber-700"> Note: High detour penalty applies.</span>
-              )}
-            </p>
-          </div>
+          <p className="text-transit-text leading-relaxed">
+            {preference === 'fastest'
+              ? (lang === 'hi'
+                ? 'यह विकल्प सबसे कम यात्रा समय के आधार पर शीर्ष पर रखा गया है।'
+                : 'This option gets you to your destination in the least total minutes.')
+              : preference === 'least_crowded'
+              ? (lang === 'hi'
+                ? 'यह विकल्प कम भीड़ को प्राथमिकता देता है, भले ही इसमें कुछ मिनट अधिक लगें।'
+                : 'This route avoids the most crowded corridors, trading a few extra minutes for higher seating chances.')
+              : (lang === 'hi'
+                ? 'संतुलित विकल्प यात्रा के समय और भीड़ दोनों को ध्यान में रखता है ताकि आरामदायक और तेज़ सफर मिल सके।'
+                : 'Balanced ranking weighs travel time against bus crowdedness, aiming for comfort without adding unnecessary travel time.')}
+          </p>
+
+          <p className="text-[11px] text-transit-textMuted pt-1 border-t border-transit-border">
+            {lang === 'hi'
+              ? 'अनुमान ऐतिहासिक टिकट डेटा और स्टॉप-दर-स्टॉप लोड मॉडल पर आधारित हैं।'
+              : 'Estimates are based on historical ticket transaction counts and stop-by-stop passenger reconstruction.'}
+          </p>
         </div>
 
-        <div className="pt-2 flex justify-end">
+        {/* Close Button */}
+        <div className="pt-2">
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-brand-navy hover:bg-slate-800 text-white font-medium text-xs rounded-xl transition-colors"
+            className="w-full py-2 text-xs font-semibold rounded-[4px] bg-navy text-white hover:bg-navy/90 transition-colors min-h-[44px]"
           >
-            Got it, close
+            {lang === 'hi' ? 'समझ आ गया' : 'Got it'}
           </button>
         </div>
       </div>
     </div>
   );
 }
-

@@ -57,3 +57,15 @@ This document details the exact items that require manual owner intervention, wh
 - The GitHub remote is `https://github.com/rajnyx/transport-stack-hackathon.git` (`main` branch).
 - All raw CSV and GTFS data files are preserved safely in `data/raw/`.
 - Ensure your GitHub repository visibility matches organizer guidelines before submission.
+
+### 6. Native Speaker Review of Hindi Translations (`frontend/src/i18n/hi.json`)
+- **Status:** **DRAFTED & ACTIVE IN APPLICATION**.
+- **Scope:** Complete bilingual UI dictionaries (`frontend/src/i18n/hi.json` and `en.json`).
+- **Standardized Crowd Labels:**
+  - Low $\rightarrow$ कम भीड़
+  - Moderate $\rightarrow$ मध्यम भीड़
+  - High $\rightarrow$ ज़्यादा भीड़
+  - Insufficient data $\rightarrow$ पर्याप्त डेटा नहीं
+  - Timetable scheduled $\rightarrow$ निर्धारित समय
+  - Historical data line $\rightarrow$ इस समय के पिछले टिकट डेटा पर आधारित
+- **Your Action:** Have a native Hindi speaker do a final proofread of `frontend/src/i18n/hi.json` to ensure colloquial phrasing aligns with everyday Delhi commuter usage. Do not claim it is natively reviewed until inspected.
