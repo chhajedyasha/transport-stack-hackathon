@@ -33,9 +33,11 @@ export default function LeafletRouteMap({
   shapePoints = [],
   highlightOrigin = null,
   highlightDest = null,
+  distanceKm = null,
   height = '360px',
   className = '',
 }) {
+  const totalDistKm = distanceKm || (stops.length > 0 ? stops[stops.length - 1]?.distance_km : null) || 12.0;
   // Compute polyline coordinates from shapePoints or stops sequence
   const polylineCoords = useMemo(() => {
     if (shapePoints && shapePoints.length > 0) {
@@ -142,19 +144,31 @@ export default function LeafletRouteMap({
                 }}
               >
                 <Popup className="text-xs font-sans">
-                  <div className="font-bold text-navy">{stop.stop_name || `Stop #${idx + 1}`}</div>
+                  <div className="font-bold text-navy text-sm">{stop.stop_name || `Stop #${idx + 1}`}</div>
+                  <div className="flex items-center gap-2 mt-1 text-xs">
+                    {stop.arrival_time_12h && (
+                      <span className="font-mono font-bold text-teal bg-teal/10 px-1.5 py-0.5 rounded">
+                        🕒 {stop.arrival_time_12h}
+                      </span>
+                    )}
+                    {stop.distance_km != null && (
+                      <span className="font-medium text-navy bg-transit-bg px-1.5 py-0.5 rounded border border-transit-border">
+                        📍 {stop.distance_km} km
+                      </span>
+                    )}
+                  </div>
                   {stop.stop_id && (
-                    <div className="text-[10px] text-transit-textMuted font-mono">
-                      Stop ID: {stop.stop_id}
+                    <div className="text-[10px] text-transit-textMuted font-mono mt-1">
+                      Stop ID: {stop.stop_id} · Sequence: #{idx + 1}
                     </div>
                   )}
                   {isOrigin && (
-                    <div className="text-[10px] font-bold text-teal mt-0.5 uppercase">
-                      ● Boarding / Origin Stop
+                    <div className="text-[10px] font-bold text-teal mt-1 uppercase tracking-wide">
+                      ● Boarding / Departure Stop
                     </div>
                   )}
                   {isDest && (
-                    <div className="text-[10px] font-bold text-navy mt-0.5 uppercase">
+                    <div className="text-[10px] font-bold text-navy mt-1 uppercase tracking-wide">
                       ■ Alighting / Destination Stop
                     </div>
                   )}
@@ -181,8 +195,12 @@ export default function LeafletRouteMap({
             <span>Bus Track</span>
           </span>
         </div>
-        <div>
-          <span>{stops.length > 0 ? `${stops.length} stops along corridor` : 'Corridor track view'}</span>
+        <div className="font-semibold text-navy">
+          <span>
+            {stops.length > 0
+              ? `${stops.length} stops · ${totalDistKm} km corridor`
+              : 'Corridor track view'}
+          </span>
         </div>
       </div>
     </div>

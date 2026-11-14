@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Clock, Navigation, Search, X } from 'lucide-react';
-import { searchStops } from '../../api';
+import { MapPin, Clock, Navigation, Search, X, Sparkles, Building2 } from 'lucide-react';
+import { searchStops, getSuggestedStops } from '../../api';
+
+const DEFAULT_POPULAR_HUBS = [
+  { stop_id: '5694', stop_name: 'Anand Vihar ISBT', stop_code: 'AV01', hub_category: 'East Delhi Inter-State Hub' },
+  { stop_id: '5100', stop_name: 'Shivaji Stadium Terminal ( Connaught Place )', stop_code: 'CP01', hub_category: 'Central Hub / Connaught Place' },
+  { stop_id: '1025', stop_name: 'Kashmere Gate City Bus Terminal', stop_code: 'KG01', hub_category: 'North Delhi Inter-State Hub' },
+  { stop_id: '2829', stop_name: 'AIIMS New Delhi', stop_code: 'AI01', hub_category: 'South Delhi Medical Hub' },
+  { stop_id: '3102', stop_name: 'Dhaula Kuan', stop_code: 'DK01', hub_category: 'South-West Interchange' },
+  { stop_id: '2325', stop_name: 'Sarai Kale Khan ISBT', stop_code: 'SK01', hub_category: 'South-East Inter-State Hub' },
+  { stop_id: '2559', stop_name: 'Nehru Place', stop_code: 'NP01', hub_category: 'South Commercial Hub' },
+  { stop_id: '1325', stop_name: 'Karol Bagh Terminal', stop_code: 'KB01', hub_category: 'West Transit Terminal' },
+];
 
 /**
  * StopCombobox — High-performance accessible Transit Stop Picker
@@ -30,6 +41,7 @@ export default function StopCombobox({
   const [isLoading, setIsLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [nearbyStops, setNearbyStops] = useState([]);
+  const [suggestedHubs, setSuggestedHubs] = useState(DEFAULT_POPULAR_HUBS);
   const [locLoading, setLocLoading] = useState(false);
   const [locMessage, setLocMessage] = useState(null);
 
@@ -42,6 +54,15 @@ export default function StopCombobox({
     setQuery(value || '');
   }, [value]);
 
+  // Load backend popular hubs on mount
+  useEffect(() => {
+    getSuggestedStops(8).then((hubs) => {
+      if (Array.isArray(hubs) && hubs.length > 0) {
+        setSuggestedHubs(hubs);
+      }
+    }).catch(() => {});
+  }, []);
+
   // Click outside listener
   useEffect(() => {
     function handleClickOutside(e) {
@@ -53,9 +74,9 @@ export default function StopCombobox({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Debounced stop search with abort controller
+  // Debounced stop search with abort controller (starts at 1 char)
   useEffect(() => {
-    if (!query || query.trim().length < 2) {
+    if (!query || query.trim().length < 1) {
       setResults([]);
       setIsLoading(false);
       return;
@@ -232,6 +253,14 @@ export default function StopCombobox({
         ) : null}
       </div>
 
+      {/* Helpful shortcut hint for users */}
+      <div className="text-[11px] text-tx-muted flex items-center gap-1 mt-0.5 px-0.5 select-none">
+        <span className="text-teal font-bold">💡</span>
+        <span>
+          Type shortcuts like <strong className="text-navy font-semibold">'CP'</strong>, <strong className="text-navy font-semibold">'ISBT'</strong>, <strong className="text-navy font-semibold">'AIIMS'</strong>, or pick a suggested hub
+        </span>
+      </div>
+
       {error && <p className="text-xs text-[#C8372D] font-medium mt-0.5">{error}</p>}
 
       {/* Floating Dropdown Panel */}
@@ -344,6 +373,40 @@ export default function StopCombobox({
                   </button>
                 );
               })}
+            </div>
+          )}
+
+          {/* Suggested Major Transit Hubs (Zero-query Quick Select) */}
+          {isOpen && query.trim().length === 0 && suggestedHubs.length > 0 && (
+            <div className="py-1 border-t border-border/50">
+              <div className="px-3 py-1.5 text-[11px] font-bold text-navy uppercase tracking-wider bg-[#F7F8F6] flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-teal" />
+                  <span>Suggested Major Transit Hubs</span>
+                </span>
+                <span className="text-[10px] text-teal font-medium">Quick Select</span>
+              </div>
+              {suggestedHubs.map((hub, i) => (
+                <button
+                  key={`hub-${hub.stop_id || i}`}
+                  type="button"
+                  onClick={() => handleSelect(hub)}
+                  className="w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-teal-tint transition-colors border-b border-border/30 last:border-0"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    <span className="w-6 h-6 rounded bg-navy/10 text-teal flex items-center justify-center shrink-0">
+                      <Building2 className="w-3.5 h-3.5" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-navy text-xs sm:text-sm truncate">{hub.stop_name}</div>
+                      <div className="text-[11px] text-tx-muted truncate">{hub.hub_category || 'Major Delhi Terminal'}</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono bg-[#F7F8F6] border border-border px-1.5 py-0.5 rounded text-navy shrink-0 font-medium">
+                    {hub.stop_code || `Stop ${hub.stop_id}`}
+                  </span>
+                </button>
+              ))}
             </div>
           )}
 

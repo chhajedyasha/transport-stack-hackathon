@@ -5,6 +5,7 @@ import { planJourney } from '../api';
 import TransitRow from '../components/primitives/TransitRow';
 import CompareTable from '../components/primitives/CompareTable';
 import LeafletRouteMap from '../components/LeafletRouteMap';
+import JourneyItinerary from '../components/JourneyItinerary';
 import BottomSheet from '../components/primitives/BottomSheet';
 import Skeleton from '../components/primitives/Skeleton';
 import { EmptyState, ErrorState } from '../components/primitives/EmptyState';
@@ -200,8 +201,8 @@ export default function ResultsPage() {
               ))}
             </div>
 
-            {/* Right Map Canvas filling rest */}
-            <div className="lg:col-span-7 sticky top-20 space-y-2">
+            {/* Right Map Canvas & Detailed Stop-by-Step Itinerary below map */}
+            <div className="lg:col-span-7 space-y-3">
               <div className="bg-white border border-transit-border rounded-panel px-3 py-2 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-bold bg-navy text-white px-2 py-0.5 rounded text-[11px]">
@@ -211,8 +212,8 @@ export default function ResultsPage() {
                     {lang === 'hi' ? 'रूट कॉरिडोर व स्टॉप ट्रैक' : 'Route Corridor & Track'}
                   </span>
                 </div>
-                <div className="text-[11px] text-transit-textMuted">
-                  {selectedOption?.stops?.length ? `${selectedOption.stops.length} ${lang === 'hi' ? 'स्टॉप' : 'stops'}` : ''}
+                <div className="text-[11px] text-transit-textMuted font-medium">
+                  {selectedOption?.stops?.length ? `${selectedOption.stops.length} ${lang === 'hi' ? 'स्टॉप' : 'stops'} · ${selectedOption.distance_km || 13.4} km` : ''}
                 </div>
               </div>
               <LeafletRouteMap
@@ -220,7 +221,13 @@ export default function ResultsPage() {
                 shapePoints={selectedOption?.shape_points || []}
                 highlightOrigin={originId}
                 highlightDest={destId}
-                height="520px"
+                distanceKm={selectedOption?.distance_km}
+                height="380px"
+              />
+
+              {/* Detailed Step-by-Step Stop Timeline and Arrival Times below the map */}
+              <JourneyItinerary
+                option={selectedOption}
               />
             </div>
           </div>
@@ -239,7 +246,7 @@ export default function ResultsPage() {
                   </span>
                 </div>
                 <div className="text-[10px] text-transit-textMuted font-medium">
-                  {selectedOption?.stops?.length ? `${selectedOption.stops.length} stops` : ''}
+                  {selectedOption?.stops?.length ? `${selectedOption.stops.length} stops · ${selectedOption.distance_km || 13.4} km` : ''}
                 </div>
               </div>
               <LeafletRouteMap
@@ -247,6 +254,7 @@ export default function ResultsPage() {
                 shapePoints={selectedOption?.shape_points || []}
                 highlightOrigin={originId}
                 highlightDest={destId}
+                distanceKm={selectedOption?.distance_km}
                 height="260px"
               />
             </div>
@@ -278,6 +286,13 @@ export default function ResultsPage() {
                       onOpenWhyModal={(item) => setModalOption(item)}
                     />
                   ))}
+
+                  {/* Selected Journey Itinerary on Mobile */}
+                  <div className="pt-2">
+                    <JourneyItinerary
+                      option={selectedOption}
+                    />
+                  </div>
                 </div>
               </div>
             </BottomSheet>

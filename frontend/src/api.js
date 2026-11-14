@@ -37,6 +37,16 @@ export async function searchStops(query, limit = 8) {
   return res.data?.matches || [];
 }
 
+export async function getSuggestedStops(limit = 8) {
+  try {
+    const res = await fetchApi(`/stops/suggested?limit=${limit}`);
+    if (Array.isArray(res.data)) return res.data;
+    return res.data?.matches || [];
+  } catch {
+    return [];
+  }
+}
+
 export async function planJourney({ originId, destId, departureTime, preference, date }) {
   const params = new URLSearchParams({
     origin_id: originId,

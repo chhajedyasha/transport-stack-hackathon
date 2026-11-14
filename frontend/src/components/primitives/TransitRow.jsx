@@ -46,8 +46,10 @@ export default function TransitRow({
   const rideMin = option.ride_time_minutes || totalMin;
   const waitMin = option.wait_time_minutes || 0;
   const walkMin = option.walk_time_minutes || 0;
-  const depTime = formatTime12h(option.departure_time);
+  const depTime = formatTime12h(option.departure_time || option.scheduled_departure);
   const routeNum = option.route_short_name || option.route_id || '73UP';
+  const distKm = option.distance_km || option.timing?.distance_km;
+  const stopsCount = option.stops_count || option.stops?.length;
 
   // Crowd text construction
   const crowdOrigin = option.crowd_category || 'low';
@@ -81,7 +83,9 @@ export default function TransitRow({
           <div className="flex flex-wrap items-center gap-2">
             <RouteBadge routeNumber={routeNum} size="md" />
             <span className="text-xs text-transit-textMuted font-medium">
-              {lang === 'hi' ? `प्रस्थान ${depTime} · निर्धारित` : `Leaves ${depTime} · scheduled`}
+              {lang === 'hi'
+                ? `प्रस्थान ${depTime} · ${distKm ? `${distKm} किमी · ` : ''}${stopsCount ? `${stopsCount} स्टॉप` : 'निर्धारित'}`
+                : `Leaves ${depTime} · ${distKm ? `${distKm} km · ` : ''}${stopsCount ? `${stopsCount} stops` : 'scheduled'}`}
             </span>
           </div>
 

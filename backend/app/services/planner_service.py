@@ -624,6 +624,46 @@ class JourneyPlannerService:
                     "stop_sequence": n_mid, "sequence": n_mid,
                 })
 
+        # Enrich stops with cumulative distance, approximate arrival times, and status
+        if stops_list:
+            dep_str = opt.get("scheduled_departure") or "08:30:00"
+            dep_sec = parse_time_to_seconds(dep_str)
+            travel_min = float(opt.get("ride_time_minutes") or opt.get("travel_time_min") or opt.get("timing", {}).get("travel_time_min", 35.0))
+
+            cum_dist = 0.0
+            cum_dists = [0.0]
+            for i in range(1, len(stops_list)):
+                s_prev = stops_list[i - 1]
+                s_curr = stops_list[i]
+                leg_d = haversine_distance_km(s_prev["lat"], s_prev["lon"], s_curr["lat"], s_curr["lon"])
+                cum_dist += leg_d
+                cum_dists.append(round(cum_dist, 2))
+
+            total_dist_km = cum_dists[-1] if cum_dists[-1] > 0.1 else float(opt.get("timing", {}).get("distance_km", 12.0))
+            opt["distance_km"] = round(total_dist_km, 1)
+            if "timing" in opt and isinstance(opt["timing"], dict):
+                opt["timing"]["distance_km"] = round(total_dist_km, 1)
+
+            n_stops = len(stops_list)
+            for idx, stop in enumerate(stops_list):
+                d_stop = cum_dists[idx] if idx < len(cum_dists) else round((idx / max(1, n_stops - 1)) * total_dist_km, 2)
+                frac = (d_stop / total_dist_km) if total_dist_km > 0 else (idx / max(1, n_stops - 1))
+                arr_sec = dep_sec + int(frac * travel_min * 60)
+                arr_str_24 = format_seconds_to_time(arr_sec)[:5]
+
+                h_part = (arr_sec // 3600) % 24
+                m_part = (arr_sec % 3600) // 60
+                period = "pm" if h_part >= 12 else "am"
+                h_12 = h_part % 12 or 12
+                arr_str_12 = f"{h_12}:{m_part:02d} {period}"
+
+                stop["arrival_time"] = arr_str_24
+                stop["arrival_time_12h"] = arr_str_12
+                stop["dist_from_origin_km"] = round(d_stop, 1)
+                stop["distance_km"] = round(d_stop, 1)
+                stop["is_origin"] = (idx == 0)
+                stop["is_destination"] = (idx == n_stops - 1)
+
         opt["stops"] = stops_list
         opt["stops_count"] = len(stops_list)
 
@@ -946,6 +986,7 @@ class JourneyPlannerService:
             opt["wait_time_minutes"] = int(opt.get("wait_time_min", 10))
             opt["crowd_category"] = opt.get("crowding_label", "Standing Room")
             opt["avg_rci"] = round(float(opt.get("rci", 50.0)), 1)
+            self._attach_stops_to_option(opt)
 
         pref_key = str(preference).strip().lower().replace(" ", "_").replace("-", "_")
         return {

@@ -90,14 +90,18 @@ def search_stops():
         else:
             return api_response(data=[], data_tier="real_public", start_time=t0, warning="Search engine uninitialized")
 
-    # If empty query and no coordinates, return empty list []
-    if not query:
+    # If empty query and no coordinates, check for suggest flag
+    suggest_flag = request.args.get("suggest") in ("1", "true") or query.lower() in ("popular", "hubs", "suggest")
+    if not query and not suggest_flag:
         return api_response(data=[], data_tier="real_public", start_time=t0)
 
-    # Text / Prefix / Fuzzy search
+    # Text / Prefix / Fuzzy search (or popular hubs if suggest_flag)
     engine = get_search_engine()
     if engine:
-        matches = engine.search_text(query, limit=limit)
+        if suggest_flag and (not query or query.lower() in ("popular", "hubs", "suggest")):
+            matches = engine.get_popular_hubs(limit=limit)
+        else:
+            matches = engine.search_text(query, limit=limit)
         results = [
             {
                 "stop_id": m.get("stop_id", ""),
@@ -105,6 +109,8 @@ def search_stops():
                 "stop_name": m.get("stop_name", ""),
                 "stop_lat": m.get("stop_lat", 0.0),
                 "stop_lon": m.get("stop_lon", 0.0),
+                "hub_category": m.get("hub_category", ""),
+                "is_popular_hub": m.get("is_popular_hub", False),
             }
             for m in matches
         ]
@@ -165,4 +171,18 @@ def nearby_stops():
     else:
         results = []
         
+    return api_response(data=results, data_tier="real_public", start_time=t0)
+
+
+@bp.route("/popular", methods=["GET"])
+@bp.route("/suggested", methods=["GET"])
+def get_popular_transit_hubs():
+    """Returns curated popular departure/destination hubs in Delhi NCT."""
+    t0 = time.time()
+    try:
+        limit = min(20, max(1, int(request.args.get("limit", 8))))
+    except (ValueError, TypeError):
+        limit = 8
+    engine = get_search_engine()
+    results = engine.get_popular_hubs(limit=limit) if engine else []
     return api_response(data=results, data_tier="real_public", start_time=t0)

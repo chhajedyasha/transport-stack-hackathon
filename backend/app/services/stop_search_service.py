@@ -268,14 +268,31 @@ class StopSearchEngine:
         q_lower = q.lower()
         q_upper = q.upper()
 
-        # Vernacular transliteration normalization for common Delhi transit names
+        # Vernacular transliteration & commuter shorthand normalization for Delhi transit
         vernacular_map = {
-            "kashmiri": "kashmere",
+            "cp": "connaught place",
+            "connaught": "connaught place",
+            "rajiv chowk": "connaught place",
+            "super bazar": "connaught place",
+            "shivaji": "shivaji stadium",
+            "isbt": "isbt",
+            "kashmiri": "kashmere gate",
+            "kashmere": "kashmere gate",
+            "kashmiri gate": "kashmere gate isbt",
             "dholakuan": "dhaula kuan",
-            "dhawla": "dhaula",
+            "dhawla": "dhaula kuan",
+            "dhaula": "dhaula kuan",
             "aims": "aiims",
-            "cannaught": "connaught",
-            "chandani": "chandni",
+            "safdarjung": "aiims",
+            "cannaught": "connaught place",
+            "chandani": "chandni chowk",
+            "ndls": "new delhi",
+            "nizamuddin": "sarai kale khan",
+            "sarai kale": "sarai kale khan",
+            "iit": "iit gate",
+            "nehru": "nehru place",
+            "karol": "karol bagh",
+            "azadpur": "azadpur",
         }
         q_norm = q_lower
         for k, v in vernacular_map.items():
@@ -295,6 +312,23 @@ class StopSearchEngine:
                 for idx in self.by_exact_name[term]:
                     matched_indices[idx] = (0.95, "exact_name")
 
+        # 2b. Shorthand boost for prominent transit hubs (e.g. 'cp' -> Connaught Place / Shivaji Stadium)
+        if q_lower in ("cp", "connaught", "rajiv chowk"):
+            for idx, stop in enumerate(self.stops):
+                n_l = str(stop.get("stop_name", "")).lower()
+                if "connaught" in n_l or "shivaji stadium" in n_l:
+                    matched_indices[idx] = (0.96, "acronym_alias")
+        elif q_lower in ("isbt", "bus stand"):
+            for idx, stop in enumerate(self.stops):
+                n_l = str(stop.get("stop_name", "")).lower()
+                if "isbt" in n_l:
+                    matched_indices[idx] = (0.95, "acronym_alias")
+        elif q_lower in ("aiims", "aims"):
+            for idx, stop in enumerate(self.stops):
+                n_l = str(stop.get("stop_name", "")).lower()
+                if "aiims" in n_l:
+                    matched_indices[idx] = (0.95, "acronym_alias")
+
         # 3. Substring & Prefix match across stops
         terms_to_check = set(filter(None, [q_lower, q_norm]))
         for idx, stop in enumerate(self.stops):
@@ -309,7 +343,7 @@ class StopSearchEngine:
                 if name_lower.startswith(term):
                     matched_indices[idx] = (0.90, "prefix_name")
                     break
-                elif len(term) >= 3 and term in name_lower:
+                elif len(term) >= 2 and term in name_lower:
                     matched_indices[idx] = (0.88, "substring_name")
                     break
 
@@ -434,4 +468,32 @@ class StopSearchEngine:
             return self.search_nearest(lat, lon, radius_km=radius_km, limit=limit)
         elif q:
             return self.search_text(q, limit=limit)
-        return []
+        return self.get_popular_hubs(limit=limit)
+
+    def get_popular_hubs(self, limit: int = 8) -> List[Dict[str, Any]]:
+        """Returns major curated Delhi NCT transit hubs for zero-query discovery."""
+        hub_keywords = [
+            ("Anand Vihar", "East Delhi Inter-State Hub"),
+            ("Shivaji Stadium", "Central Hub / Connaught Place"),
+            ("Kashmere Gate", "North Delhi Inter-State Hub"),
+            ("AIIMS", "South Delhi Medical Hub"),
+            ("Dhaula Kuan", "South-West Interchange"),
+            ("Sarai Kale Khan", "South-East Inter-State Hub"),
+            ("Nehru Place", "South Commercial Hub"),
+            ("Karol Bagh", "West Transit Terminal"),
+        ]
+        found = []
+        seen_names = set()
+        for kw, desc in hub_keywords:
+            matches = self.search_text(kw, limit=2)
+            if matches:
+                m = matches[0]
+                name = m.get("stop_name", "")
+                if name not in seen_names:
+                    seen_names.add(name)
+                    found.append({
+                        **m,
+                        "hub_category": desc,
+                        "is_popular_hub": True,
+                    })
+        return found[:limit]
